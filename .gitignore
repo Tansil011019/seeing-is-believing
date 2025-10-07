@@ -205,3 +205,40 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# Project specific
+# Data directories
+data/
+datasets/
+*.zip
+*.tar.gz
+*.rar
+
+# Model files
+*.h5
+*.hdf5
+*.pb
+*.onnx
+*.tflite
+*.keras
+saved_models/
+checkpoints/
+model_weights/
+
+# Logs and outputs
+logs/
+outputs/
+results/
+plots/
+figures/
+*.png
+*.jpg
+*.jpeg
+*.svg
+!example_*.png
+!example_*.jpg
+
+# Temporary files
+temp/
+tmp/
+.tmp/

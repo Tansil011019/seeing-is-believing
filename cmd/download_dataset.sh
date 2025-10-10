@@ -6,14 +6,22 @@
 set -e  # Exit on any error
 
 echo "Installing gdown if not already installed..."
-pip install gdown
+if ! command -v uv &> /dev/null; then
+	echo "Error: 'uv' environment is not initiated. Please initiate it and try again."
+	exit 1
+fi
+
+uv pip install gdown
 
 echo "Creating data directory if it doesn't exist..."
 mkdir -p data
 
 echo "Downloading dataset from Google Drive..."
 # Download the entire folder from Google Drive
-gdown --folder https://drive.google.com/drive/folders/1XP38r7Aytadj2nUbiFfhRbmIQC9x-HOx -O data/
+if ! gdown --folder https://drive.google.com/drive/folders/$GDRIVE_DATASET_FOLDER_ID -O data/; then
+	echo "Error: Failed to download dataset from Google Drive."
+	exit 1
+fi
 
 echo "Looking for zip files to extract..."
 # Find and extract any zip files in the data directory

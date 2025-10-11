@@ -5,27 +5,35 @@
 
 set -e  # Exit on any error
 
-echo "Installing gdown if not already installed..."
-if ! command -v uv &> /dev/null; then
-	echo "Error: 'uv' environment is not initiated. Please initiate it and try again."
-	exit 1
+echo "Checking for wget..."
+if ! command -v wget &> /dev/null; then
+ 	echo "Error: wget is not installed. Please install wget and try again."
+ 	exit 1
 fi
 
-uv pip install gdown
+# Dataset URLs
+t12_url="https://isic-archive.s3.amazonaws.com/challenges/2018/ISIC2018_Task1-2_Training_Input.zip"
+t3_url="https://isic-archive.s3.amazonaws.com/challenges/2018/ISIC2018_Task3_Training_Input.zip"
+t12_val_url="https://isic-archive.s3.amazonaws.com/challenges/2018/ISIC2018_Task1-2_Validation_Input.zip"
+t3_val_url="https://isic-archive.s3.amazonaws.com/challenges/2018/ISIC2018_Task3_Validation_Input.zip"
+t12_test_url="https://isic-archive.s3.amazonaws.com/challenges/2018/ISIC2018_Task1-2_Test_Input.zip"
+t3_test_url="https://isic-archive.s3.amazonaws.com/challenges/2018/ISIC2018_Task3_Test_Input.zip"
 
-echo "Creating data directory if it doesn't exist..."
-mkdir -p data
+echo "Creating datasets directory if it doesn't exist..."
+mkdir -p datasets
 
-echo "Downloading dataset from Google Drive..."
-# Download the entire folder from Google Drive
-if ! gdown --folder https://drive.google.com/drive/folders/$GDRIVE_DATASET_FOLDER_ID -O data/; then
-	echo "Error: Failed to download dataset from Google Drive."
-	exit 1
-fi
+echo "Downloading datasets..."
+for url in "${t12_url}" "${t3_url}" "${t12_val_url}" "${t3_val_url}" "${t12_test_url}" "${t3_test_url}"; do
+ 	echo "Downloading $url"
+ 	if ! wget -c "$url" -P datasets/; then
+ 		echo "Error: Failed to download $url"
+ 		exit 1
+ 	fi
+done
 
 echo "Looking for zip files to extract..."
-# Find and extract any zip files in the data directory
-find data/ -name "*.zip" -exec unzip -o {} -d data/ \;
+# Find and extract any zip files in the datasets directory
+find datasets/ -name "*.zip" -exec unzip -o {} -d datasets/ \;
 
 echo "Dataset download and extraction completed!"
-echo "Data is available in the data/ directory"
+echo "Data is available in the datasets/ directory"

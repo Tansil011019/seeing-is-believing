@@ -11,35 +11,6 @@ from typing import List, Tuple, Dict, Any
 import matplotlib.pyplot as plt
 import seaborn as sns
 
-
-def preprocess_images(images: List[Image.Image], target_size: Tuple[int, int] = (224, 224)) -> np.ndarray:
-    """
-    Preprocess PIL images for model training.
-    
-    Args:
-        images (List[Image.Image]): List of PIL Image objects
-        target_size (Tuple[int, int]): Target size for resizing (default: (224, 224))
-    
-    Returns:
-        np.ndarray: Preprocessed image array of shape (n_samples, height, width, channels)
-    """
-    processed_images = []
-    
-    for img in images:
-        # Convert to RGB if not already
-        if img.mode != 'RGB':
-            img = img.convert('RGB')
-        
-        # Resize image
-        img_resized = img.resize(target_size, Image.Resampling.LANCZOS)
-        
-        # Convert to numpy array and normalize
-        img_array = np.array(img_resized, dtype=np.float32) / 255.0
-        processed_images.append(img_array)
-    
-    return np.array(processed_images)
-
-
 def train_and_evaluate_model(X: List[Image.Image], 
                            y: np.ndarray, 
                            model: keras.Model,

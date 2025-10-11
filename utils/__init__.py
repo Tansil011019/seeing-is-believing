@@ -3,16 +3,18 @@ Utils package for skin disease classification project.
 """
 
 # Import evaluation utilities
-from .evaluation import (
+from .x_ai_evaluation import (
     calculate_heatmap_iou,
     display_heatmap_intersection,
     display_heatmap_union
 )
 
+# Import preprocessing utilities
+from .preprocess import sample_and_split, rotative_oversample, cut_undersample
+
 # Import training utilities
-from .training import (
+from .training_evaluation import (
     train_and_evaluate_model,
-    preprocess_images,
     plot_training_history,
     plot_confusion_matrix
 )

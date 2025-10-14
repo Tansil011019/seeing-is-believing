@@ -36,12 +36,18 @@ def preprocess_images(images: List[Image.Image], target_size: Tuple[int, int] = 
     return np.array(processed_images)
 
 
-def sample_and_split(dataset_dir: str, sample_size: int, sample_random: int = 42, test_size: float = 0.2, test_random: int = 42) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
+def sample_and_split(dataset_dir: str,
+                     ground_truth_file: str, 
+                     sample_size: int, 
+                     sample_random: int = 42, 
+                     test_size: float = 0.2, 
+                     test_random: int = 42) -> Tuple[pd.Series, pd.Series, pd.Series, pd.Series]:
     """
     Sample dataset with preserved label ratios and split into train/test sets.
     
     Args:
-        dataset_dir (str): Directory containing the CSV file and images
+        dataset_dir (str): Directory containing the images
+        ground_truth_file (str): Path to the ground truth CSV file
         sample_size (int): Number of samples to extract
         sample_random (int): Random state for sampling
         test_size (float): Proportion of test set
@@ -50,14 +56,8 @@ def sample_and_split(dataset_dir: str, sample_size: int, sample_random: int = 42
     Returns:
         Tuple: X_train, y_train, X_test, y_test
     """
-    # Find CSV file in dataset directory
-    csv_files = [f for f in os.listdir(dataset_dir) if f.endswith('.csv')]
-    if not csv_files:
-        raise FileNotFoundError(f"No CSV file found in {dataset_dir}")
-    
-    csv_path = os.path.join(dataset_dir, csv_files[0])
-    df = pd.read_csv(csv_path)
-    
+    df = pd.read_csv(ground_truth_file)
+
     # Calculate label ratios
     label_counts = df['label'].value_counts()
     total_samples = len(df)

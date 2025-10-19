@@ -242,3 +242,5 @@ figures/
 temp/
 tmp/
 .tmp/
+
+venvs

@@ -83,7 +83,7 @@ def sample_and_split(dataset_dir: str,
     return X_train, y_train, X_test, y_test
 
 
-def rotative_oversample(dataset_dir: str, X: pd.Series, y: pd.Series, random: int = 42) -> Tuple[pd.Series, pd.Series]:
+def rotative_oversample(dataset_dir: str, X: pd.Series, y: pd.Series, random_seed: int = 42) -> Tuple[pd.Series, pd.Series]:
     """
     Rotate minority class images to match majority class count (max 8x upsampling).
     
@@ -96,8 +96,8 @@ def rotative_oversample(dataset_dir: str, X: pd.Series, y: pd.Series, random: in
     Returns:
         Tuple: X_resampled, y_resampled
     """
-    np.random.seed(random)
-    random.seed(random)
+    np.random.seed(random_seed)
+    random.seed(random_seed)
     
     # Count classes
     label_counts = Counter(y)

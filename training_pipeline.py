@@ -1,14 +1,21 @@
 import os
 import pandas as pd
 import matplotlib.pyplot as plt
-
+from utils.clean import clean_dataframe
 from utils.preprocess import sample_and_split, rotative_oversample, cut_undersample
 
 # Define dataset directory
 dataset_dir = "datasets/ISIC2018_Task3_Training_Input"
+ground_truth_file = "datasets/ISIC2018_Task3_Training_GroundTruth/ISIC2018_Task3_Training_GroundTruth.csv"
+melt_output_file = "datasets/ISIC2018_Task3_Training_GroundTruth/melted_ground_truth.csv"
 
 # 1. Sample and split the dataset
-X_train, y_train, X_test, y_test = sample_and_split(dataset_dir, sample_size=1000, test_size=0.2)
+clean_dataframe(ground_truth_file, melt_output_file)
+
+X_train, y_train, X_test, y_test = sample_and_split(dataset_dir,
+                                                    melt_output_file, 
+                                                    sample_size=1000, 
+                                                    test_size=0.2)
 
 # Create DataFrame for training data preview
 df_train = pd.DataFrame({

@@ -96,6 +96,12 @@ def rotative_oversample(dataset_dir: str, X: pd.Series, y: pd.Series, random_see
     Returns:
         Tuple: X_resampled, y_resampled
     """
+    # Check if X.len() matches y.len()
+    if len(X) != len(y):
+        raise ValueError("Length of X and y must be the same.")
+    
+    
+    
     np.random.seed(random_seed)
     random.seed(random_seed)
     
@@ -110,8 +116,16 @@ def rotative_oversample(dataset_dir: str, X: pd.Series, y: pd.Series, random_see
     y_resampled = []
     
     for label, count in label_counts.items():
+        if count >= max_count:
+            # No need to oversample
+            label_indices = y[y == label].index
+            label_images = X.loc[label_indices]
+            X_resampled.extend(label_images.tolist())
+            y_resampled.extend([label] * len(label_images))
+            continue
+        
         label_indices = y[y == label].index
-        label_images = X.iloc[label_indices]
+        label_images = X.loc[label_indices]
         
         # Add original images
         X_resampled.extend(label_images.tolist())
@@ -179,7 +193,7 @@ def cut_undersample(dataset_dir: str, X: pd.Series, y: pd.Series, random: int = 
     
     for label in label_counts.keys():
         label_indices = y[y == label].index
-        label_images = X.iloc[label_indices]
+        label_images = X.loc[label_indices]
         
         # Sample min_count images from this class
         if len(label_images) > min_count:

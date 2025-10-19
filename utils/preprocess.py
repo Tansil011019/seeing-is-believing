@@ -8,7 +8,7 @@ from collections import Counter
 import random
 
 
-def preprocess_images(images: List[Image.Image], target_size: Tuple[int, int] = (224, 224)) -> np.ndarray:
+def preprocess_images(images: List[Image.Image], target_size: Tuple[int, int] = (600, 450)) -> np.ndarray:
     """
     Preprocess PIL images for model training.
     

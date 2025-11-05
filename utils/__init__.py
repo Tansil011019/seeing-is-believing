@@ -35,6 +35,9 @@ except ImportError as e:
     print(f"Warning: Some model imports failed: {e}")
     print("Make sure TensorFlow is installed: pip install tensorflow")
 
+from .logger import setup_logger
+from .system import get_num_workers
+
 __all__ = [
     # Evaluation functions
     'calculate_heatmap_iou',
@@ -56,5 +59,9 @@ __all__ = [
     'instantiate_model_resnet101', 
     'instantiate_model_resnet152',
     'instantiate_model_resnet',
-    'get_best_resnet'
+    'get_best_resnet',
+
+    # Basic utilities
+    'setup_logger',
+    'get_num_workers'
 ]

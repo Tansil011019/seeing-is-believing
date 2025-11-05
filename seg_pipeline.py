@@ -2,7 +2,7 @@ import os, argparse, torch, torch.nn as nn, torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 from preprocessing import process_dataset_parallel, SegmentationDataset
-from models import get_model
+from seg_models import get_model
 from evaluation import CombinedLoss, evaluate_model
 from utils import setup_logger, get_num_workers
 

@@ -13,10 +13,7 @@ def process_single_image(args_tuple) -> Tuple[bool, int, str]:
     """
     Process a single image with augmentation
     
-    Args:
-        args_tuple: (image_file, image_folder, mask_folder,
-                     output_image_folder, output_mask_folder,
-                     apply_augmentation)
+    Expects to be called under run_parrallel_processing function or something idk.
     
     Returns:
         (success, num_augmented, error_message)

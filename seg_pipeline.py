@@ -175,19 +175,120 @@ class SegmentationPipeline:
         print("Training completed.\n")
  
 def main():
+    """
+    Segmentation Pipeline CLI
+    
+    Complete training pipeline for image segmentation with data augmentation,
+    checkpoint management, and automatic preprocessing.
+    
+    Examples:
+        # Basic training with defaults
+        python seg_pipeline.py
+        
+        # Custom paths and parameters
+        python seg_pipeline.py \\
+            --image_folder data/images \\
+            --mask_folder data/masks \\
+            --batch_size 16 \\
+            --num_epochs 50
+        
+        # Resume training from checkpoint
+        python seg_pipeline.py \\
+            --ckpt ./checkpoints \\
+            --image_folder data/images \\
+            --mask_folder data/masks
+        
+        # Force GPU training on specific device
+        python seg_pipeline.py \\
+            --force_device cuda \\
+            --visible_cuda_devices 0,1
+    """
+
+    
     # Args Parser Section
-    p = argparse.ArgumentParser()
-    p.add_argument('--image_folder', default="datasets/ISIC2018_Task1-2_Training_Input")
-    p.add_argument('--mask_folder', default="datasets/ISIC2018_Task1_Training_GroundTruth")
-    p.add_argument('--aug_image_folder', default="./aug_img")
-    p.add_argument('--aug_mask_folder', default="./aug_mask")
-    p.add_argument('--ckpt', default="./checkpoints")
-    p.add_argument('--batch_size', type=int, default=8)
-    p.add_argument('--num_epochs', type=int, default=100)
-    p.add_argument('--learning_rate', type=float, default=1e-4)
-    p.add_argument('--num_workers', type=int, default=4)
-    p.add_argument('--visible_cuda_devices', type=str, default=None)
-    p.add_argument('--force_device', type=str, default=None)
+    p = argparse.ArgumentParser(
+        description='Skin lesion segmentation training pipeline',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    
+    # Input/Output Arguments
+    p.add_argument(
+        '--image_folder',
+        type=str,
+        default="datasets/ISIC2018_Task1-2_Training_Input",
+        help='Path to original input images directory (default: %(default)s)'
+    )
+    p.add_argument(
+        '--mask_folder',
+        type=str,
+        default="datasets/ISIC2018_Task1_Training_GroundTruth",
+        help='Path to ground truth segmentation masks directory (default: %(default)s)'
+    )
+    p.add_argument(
+        '--aug_image_folder',
+        type=str,
+        default="./aug_img",
+        help='Path to save augmented images (default: %(default)s)'
+    )
+    p.add_argument(
+        '--aug_mask_folder',
+        type=str,
+        default="./aug_mask",
+        help='Path to save augmented masks (default: %(default)s)'
+    )
+    p.add_argument(
+        '--ckpt',
+        type=str,
+        default="./checkpoints",
+        help='Checkpoint directory for saving/loading models (default: %(default)s)'
+    )
+    
+    # Training Hyperparameters
+    p.add_argument(
+        '--batch_size',
+        type=int,
+        default=8,
+        metavar='BS',
+        help='Batch size for training (default: %(default)s)'
+    )
+    p.add_argument(
+        '--num_epochs',
+        type=int,
+        default=100,
+        metavar='E',
+        help='Number of training epochs (default: %(default)s)'
+    )
+    p.add_argument(
+        '--learning_rate',
+        type=float,
+        default=1e-4,
+        metavar='LR',
+        help='Adam optimizer learning rate (default: %(default)s)'
+    )
+    
+    # Data Loading & Device Configuration
+    p.add_argument(
+        '--num_workers',
+        type=int,
+        default=4,
+        metavar='W',
+        help='Number of parallel data loading workers. Use -1 for all available CPUs (default: %(default)s)'
+    )
+    p.add_argument(
+        '--visible_cuda_devices',
+        type=str,
+        default=None,
+        metavar='DEVICES',
+        help='GPU device indices to use (e.g., "0,1,2"). Only effective with --force_device cuda (default: all available)'
+    )
+    p.add_argument(
+        '--force_device',
+        type=str,
+        default=None,
+        metavar='DEVICE',
+        choices=['cuda', 'cpu'],
+        help='Force specific device: "cuda" for GPU, "cpu" for CPU. Default: auto-detect (CUDA if available)'
+    )
     a = p.parse_args()
     
     if a.visible_cuda_devices:

@@ -14,9 +14,8 @@ clean_dataframe(ground_truth_file, melt_output_file)
 
 X_train, y_train, X_test, y_test = sample_and_split(dataset_dir,
                                                     melt_output_file, 
-                                                    sample_size=10015, 
-                                                    test_size=0.01)
-print(f"Training samples: {len(X_train)}, Test samples: {len(X_test)}")
+                                                    sample_size=1000, 
+                                                    test_size=0.2)
 
 # Create DataFrame for training data preview
 df_train = pd.DataFrame({
@@ -36,20 +35,20 @@ plt.ylabel('Count')
 plt.tight_layout()
 plt.show()
 
-# # 2. Oversample minority classes via rotations
-# X_os, y_os = rotative_oversample(dataset_dir, X_train, y_train)
-# df_os = pd.DataFrame({'image': X_os, 'label': y_os})
+# 2. Oversample minority classes via rotations
+X_os, y_os = rotative_oversample(dataset_dir, X_train, y_train)
+df_os = pd.DataFrame({'image': X_os, 'label': y_os})
 
-# print("Oversampled Data (first 5 rows):")
-# print(df_os.head())
+print("Oversampled Data (first 5 rows):")
+print(df_os.head())
 
-# plt.figure(figsize=(6,4))
-# df_os['label'].value_counts().plot(kind='bar')
-# plt.title('Label Distribution After Oversampling')
-# plt.xlabel('Label')
-# plt.ylabel('Count')
-# plt.tight_layout()
-# plt.show()
+plt.figure(figsize=(6,4))
+df_os['label'].value_counts().plot(kind='bar')
+plt.title('Label Distribution After Oversampling')
+plt.xlabel('Label')
+plt.ylabel('Count')
+plt.tight_layout()
+plt.show()
 
 # 3. Undersample majority classes
 X_us, y_us = cut_undersample(dataset_dir, X_train, y_train)
@@ -64,5 +63,4 @@ plt.title('Label Distribution After Undersampling')
 plt.xlabel('Label')
 plt.ylabel('Count')
 plt.tight_layout()
-plt.savefig('undersample_distribution.png')
 plt.show()

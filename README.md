@@ -1,28 +1,28 @@
 # Seeing is Believing
-A Comparative Analysis of Visual Explanations from CNN and ViT Architectures for Skin Cancer Diagnosis
+WORK IN PROGRESS README
+A Comparative Analysis of Visual Explanations from for Skin Cancer Diagnosis
 
 ## Overview
 
 This project implements and compares various deep learning architectures for skin disease classification, with a focus on explainable AI through visual explanations and heatmap analysis. The implementation includes state-of-the-art models including HI_MViT, MedKAN, and traditional CNN architectures.
 
+### 1. General Preprocessing
+**Data Augmentation:**
+- Automatically augments each image with 24 variations:
+  - 7 rotations (45°, 90°, 135°, 180°, 225°, 270°, 315°)
+  - 2 dilation variations per rotation (1×1.5, 1.5×1)
+  - 2 dilation variations on original image
+- **Smart skip**: If augmented data exists with 24× original files, augmentation is skipped automatically
+- Output: `"Augmented images found, skipping augmentation process"`
+
+### 2. Segmentation
+[WIP]
+
+
 ## Features
 
-- **Multiple Model Architectures**:
-  - HI_MViT (Hierarchical Inverted MobileViT) - Lightweight ViT variant
-  - MedKAN (Medical Kolmogorov-Arnold Networks) - KAN-based medical imaging model
-  - VGG16 - Classic CNN architecture
-  - ResNet (50, 101, 152) - Residual networks
-
-- **Evaluation Utils**:
-  - Heatmap Intersection over Union (IoU) calculation
-  - Visual heatmap comparison tools
-  - Comprehensive training and evaluation pipeline
-
-- **Easy-to-Use Training Pipeline**:
-  - Automated data preprocessing
-  - Model training with callbacks
-  - Evaluation metrics calculation
-  - Visualization tools
+- **Feature 1**:
+  - Hi i am a description
 
 ## Installation
 
@@ -50,55 +50,66 @@ bash cmd/download_dataset.sh
 ```
 
 This will:
-- Install `gdown` for Google Drive downloads
-- Download the dataset from the specified Google Drive folder
-- Extract any zip files to the `data/` directory
+- Download all datasets from the ISIC2018 bucket
+- Extract any zip files to the `datasets/` directory
 
-## Quick Start
+## Training
 
-### Basic Usage Example
+### Segmentation Training Pipeline
 
-```python
-from utils import (
-    instantiate_model_hi_mvit,
-    train_and_evaluate_model,
-    calculate_heatmap_iou
-)
-from PIL import Image
-import numpy as np
+#### Segmentation Arguments
 
-# Load your images and labels
-images = [Image.open(f"path/to/image_{i}.jpg") for i in range(100)]
-labels = np.array([0, 1, 2, ...])  # Your labels
+| Argument | Type | Default | Description |
+|----------|------|---------|-------------|
+| `--image_folder` | str | `datasets/ISIC2018_Task1-2_Training_Input` | Path to original input images directory |
+| `--mask_folder` | str | `datasets/ISIC2018_Task1_Training_GroundTruth` | Path to ground truth segmentation masks directory |
+| `--aug_image_folder` | str | `./aug_img` | Path to save augmented images |
+| `--aug_mask_folder` | str | `./aug_mask` | Path to save augmented masks |
+| `--ckpt` | str | `./checkpoints` | Checkpoint directory for saving/loading models |
+| `--batch_size` | int | `8` | Batch size for training (BS) |
+| `--num_epochs` | int | `100` | Number of training epochs (E) |
+| `--learning_rate` | float | `1e-4` | Adam optimizer learning rate (LR) |
+| `--num_workers` | int | `4` | Parallel data loading workers. Use `-1` for all available CPUs (W) |
+| `--visible_cuda_devices` | str | None | GPU device indices to use (e.g., "0,1,2"). Only effective with `--force_device cuda` |
+| `--force_device` | str | None | Force device: "cuda" for GPU, "cpu" for CPU. Default: auto-detect |
 
-# Instantiate a model
-model = instantiate_model_hi_mvit(
-    input_shape=(224, 224, 3),
-    num_classes=7
-)
+#### Usage Examples
 
-# Train and evaluate
-trained_model, confusion_matrix, metrics = train_and_evaluate_model(
-    X=images,
-    y=labels,
-    model=model,
-    test_ratio=0.2,
-    epochs=50
-)
-
-print("Accuracy:", metrics['accuracy'])
+**Basic training with defaults:**
+```bash
+python seg_pipeline.py
 ```
 
-### Run Demo
-
+**Resume training from checkpoint:**
 ```bash
-python example_usage.py
+python seg_pipeline.py \
+    --ckpt ./checkpoints \
+    --image_folder data/images \
+    --mask_folder data/masks
+```
+
+**Force GPU training with specific devices:**
+```bash
+python seg_pipeline.py \
+    --force_device cuda \
+    --visible_cuda_devices 0,1
+```
+
+
+
+## Deployments
+
+### Run Demo
+[WIP]
+```bash
+python dashboard.py
 ```
 
 ## Model Architectures
 
-### HI_MViT (Hierarchical Inverted MobileViT)
-Based on the paper "HI-MViT: A Lightweight Model for Explainable Skin Disease Classification Based on Modified MobileViT" by Ding et al. (2023). Combines the efficiency of MobileNet with the global reasoning capabilities of Vision Transformers.
+### Model 1A : CNN Based model
+A CNN model inspired by the ISIC2018 task 1 champion.
+[WIP]
 
 ### MedKAN (Medical Kolmogorov-Arnold Networks)
 A novel KAN-based architecture designed for medical image classification, using learnable spline functions for enhanced feature representation.
@@ -136,6 +147,7 @@ model, cm, metrics = train_and_evaluate_model(
 ```
 
 ## Project Structure
+[WIP]
 
 ```
 seeing-is-believing/
@@ -155,41 +167,6 @@ seeing-is-believing/
 └── README.md                      # This file
 ```
 
-## Available Models
-
-### Instantiate Models
-
-```python
-from utils import (
-    instantiate_model_hi_mvit,
-    instantiate_model_medkan,
-    instantiate_model_vgg16,
-    instantiate_model_resnet,
-    get_best_resnet
-)
-
-# HI_MViT
-model = instantiate_model_hi_mvit(num_classes=7)
-
-# MedKAN
-model = instantiate_model_medkan(num_classes=7)
-
-# VGG16 with transfer learning
-model = instantiate_model_vgg16(
-    num_classes=7,
-    weights='imagenet',
-    freeze_base=False
-)
-
-# Best ResNet (ResNet152)
-model = get_best_resnet(num_classes=7)
-
-# Specific ResNet variant
-model = instantiate_model_resnet(
-    variant='resnet101',
-    num_classes=7
-)
-```
 
 ## Skin Disease Classes
 
@@ -202,33 +179,26 @@ Typical skin disease classification includes:
 6. Dermatofibroma
 7. Vascular lesions
 
-## Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Citation
-
+[WIP]
 If you use this code in your research, please cite:
 
 ```bibtex
 @misc{seeing-is-believing-2025,
   title={Seeing is Believing: A Comparative Analysis of Visual Explanations from CNN and ViT Architectures for Skin Cancer Diagnosis},
-  author={Your Name},
+  author={},
   year={2025},
   url={https://github.com/Tansil011019/seeing-is-believing}
 }
 ```
 
 ## Acknowledgments
-
+[WIP]
 - Based on HI_MViT paper by Ding et al. (2023)
 - MedKAN architecture inspired by Kolmogorov-Arnold Networks
 - Built with TensorFlow and Keras

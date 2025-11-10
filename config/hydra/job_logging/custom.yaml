@@ -1,0 +1,27 @@
+version: 1
+
+formatters:
+  simple:
+    format: '%(asctime)s [%(levelname)s] [%(name)s] - %(message)s'
+  color:
+    class: colorlog.ColoredFormatter
+    format: '%(log_color)s[%(asctime)s] [%(levelname)s] [%(name)s] %(reset)s - %(message)s'
+    datefmt: '%Y-%m-%d %H:%M:%S'
+
+handlers:
+  console:
+    class: logging.StreamHandler
+    formatter: color
+    stream: ext://sys.stdout
+    level: DEBUG
+  file:
+    class: logging.FileHandler
+    formatter: simple
+    filename: "outputs/${now:%Y-%m-%d}/${now:%H-%M-%S}/${hydra.job.name}.log"
+    level: DEBUG
+
+root:
+  level: DEBUG
+  handlers: [console, file]
+
+disable_existing_loggers: false

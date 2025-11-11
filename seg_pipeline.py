@@ -67,7 +67,8 @@ class SegmentationPipeline:
                                  str(self.cfg['aug_mask']),
                                  True,
                                  self.num_workers,
-                                 self.logger)
+                                 self.logger,
+                                 output_size=(512, 512))
         self.logger.info("Data preprocessing completed.\n")
 
     def _check_augmented_data_exists(self, img_f: Path) -> bool:

@@ -1,0 +1,7 @@
+__target__: transformers.AutoModelForImageClassification.from_pretrained
+model_name: microsoft/resnet-18
+num_label: 10
+ignored_mismatched_sizes: true
+epochs: 200
+device: cuda:1
+save_path: "resnet18_best_model.pt"

@@ -7,7 +7,6 @@ import os
 
 logger = logging.getLogger(__name__)
 
-# TODO: Early Stopping
 class Trainer:
     def __init__(
         self, 

@@ -63,7 +63,7 @@ done
 CMD="python3 -m $ENTRYPOINT ${EXTRA_ARGS[*]}"
 echo "Running command $CMD"
 echo "-----------------------------------"
-echo "Start training"
+echo "Start Experiment"
 eval $CMD
-echo "Training complete"
+echo "Experiment Complete"
 echo "-----------------------------------"

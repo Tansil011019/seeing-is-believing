@@ -1,2 +1,9 @@
 defaults:
+  - model: resnet18
+  # - optimizer: adam
+  # - criterion: cross_entropy
+  - dataloader: class_data
+  - _self_
   - override hydra/job_logging: custom
+
+seed: 42

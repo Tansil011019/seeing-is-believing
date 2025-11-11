@@ -3,10 +3,12 @@ from torch.utils.data import DataLoader, random_split
 from tqdm import tqdm
 from pathlib import Path  # Import Path
 from typing import Optional, Dict, Any
+import csv
+from datetime import datetime
 
 # Assuming these imports exist and are correct
 from preprocessing import process_dataset_parallel, SegmentationDataset
-from seg_models import get_model
+from seg_models import get_model, get_available_models, MODEL_REGISTRY
 from evaluation import CombinedLoss, evaluate_model
 from utils import setup_logger, get_num_workers
 
@@ -24,8 +26,9 @@ class SegmentationPipeline:
     to training and evaluation.
     """
 
-    def __init__(self, cfg: Dict[str, Any], logger: Optional[Any] = None):
+    def __init__(self, cfg: Dict[str, Any], model_name: str = 'combined', logger: Optional[Any] = None):
         self.cfg = cfg
+        self.model_name = model_name
         self.logger = logger or setup_logger(name='pipe')
 
         # --- Device Configuration ---
@@ -41,11 +44,48 @@ class SegmentationPipeline:
 
         # --- Checkpoint & Model State ---
         self.best_iou = 0.0
-        self.ckpt_dir: Path = self.cfg['ckpt']
+        self.ckpt_dir: Path = self.cfg['ckpt'] / model_name
+        self.ckpt_dir.mkdir(parents=True, exist_ok=True)
         self.best_ckpt_path: Path = self.ckpt_dir / 'best.pth'
+
+        # --- Metric Tracking ---
+        self.track_metrics = cfg.get('track_metrics', False)
+        if self.track_metrics:
+            self.metrics_dir: Path = Path('outputs')
+            self.metrics_dir.mkdir(parents=True, exist_ok=True)
+            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+            self.metrics_file: Path = self.metrics_dir / f'{model_name}_metrics_{timestamp}.csv'
+            self._init_metrics_file()
 
         # --- Optional: Mixed Precision Scaler ---
         # self.scaler = torch.cuda.amp.GradScaler(enabled=(self.device.type == 'cuda'))
+
+    def _init_metrics_file(self):
+        """Initialize CSV file for tracking metrics"""
+        with open(self.metrics_file, 'w', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['epoch', 'train_loss', 'val_loss', 'val_iou', 'val_dice', 
+                           'val_accuracy', 'val_precision', 'val_recall', 'val_f1'])
+        self.logger.info(f"Metrics will be tracked in: {self.metrics_file}")
+
+    def _log_metrics(self, epoch: int, train_loss: float, metrics: Dict[str, float]):
+        """Log metrics to CSV file"""
+        if not self.track_metrics:
+            return
+        
+        with open(self.metrics_file, 'a', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow([
+                epoch,
+                f"{train_loss:.6f}",
+                f"{metrics.get('loss', 0.0):.6f}",
+                f"{metrics.get('iou', 0.0):.6f}",
+                f"{metrics.get('dice', 0.0):.6f}",
+                f"{metrics.get('accuracy', 0.0):.6f}",
+                f"{metrics.get('precision', 0.0):.6f}",
+                f"{metrics.get('recall', 0.0):.6f}",
+                f"{metrics.get('f1', 0.0):.6f}",
+            ])
 
     def preprocess(self, img_f: Path, mask_f: Path):
         """
@@ -149,8 +189,8 @@ class SegmentationPipeline:
         Initializes the model, optimizer, scheduler, and loss function.
         Loads a checkpoint if one exists.
         """
-        self.logger.info("Building model...")
-        self.model = get_model('combined',
+        self.logger.info(f"Building model: {self.model_name}...")
+        self.model = get_model(self.model_name,
                                self.cfg.get('use_mcnn', True),
                                True)
 
@@ -163,7 +203,7 @@ class SegmentationPipeline:
         # Load checkpoint if exists
         self._load_checkpoint_if_exists()
 
-        self.logger.info("Model built successfully.\n")
+        self.logger.info(f"Model '{self.model_name}' built successfully.\n")
 
     def _load_checkpoint_if_exists(self):
         """
@@ -224,7 +264,7 @@ class SegmentationPipeline:
         """
         Runs the main training and validation loop.
         """
-        self.logger.info(f"--- Starting Training ---")
+        self.logger.info(f"--- Starting Training for {self.model_name} ---")
         self.logger.info(f"Epochs: {self.cfg['epochs']}")
         self.logger.info(f"Batch Size: {self.cfg['bs']}")
         self.logger.info(f"Learning Rate: {self.cfg['lr']}")
@@ -234,7 +274,7 @@ class SegmentationPipeline:
             self.model.train()
             train_loss = 0.0
 
-            pbar = tqdm(self.train_loader, desc=f"Ep {ep}/{self.cfg['epochs']} [Train]")
+            pbar = tqdm(self.train_loader, desc=f"[{self.model_name}] Ep {ep}/{self.cfg['epochs']} [Train]")
             for b in pbar:
                 imgs = b['image'].to(self.device, non_blocking=True)
                 masks = b['mask'].to(self.device, non_blocking=True)
@@ -269,8 +309,11 @@ class SegmentationPipeline:
             val_iou = m['iou']
 
             self.logger.info(
-                f"Epoch {ep:03d} | Train Loss: {avg_train_loss:.4f} | Val IoU: {val_iou:.4f}"
+                f"[{self.model_name}] Epoch {ep:03d} | Train Loss: {avg_train_loss:.4f} | Val IoU: {val_iou:.4f}"
             )
+
+            # --- Log metrics to CSV ---
+            self._log_metrics(ep, avg_train_loss, m)
 
             # --- Scheduler & Checkpointing ---
             self.sch.step(val_iou)
@@ -285,10 +328,12 @@ class SegmentationPipeline:
                     'optimizer_state_dict': self.opt.state_dict(),
                     'best_val_iou': self.best_iou,
                     'epoch': ep,
+                    'model_name': self.model_name,
                 }
                 torch.save(save_data, self.best_ckpt_path)
 
-        self.logger.info(f"Training completed. Best IoU achieved: {self.best_iou:.4f}\n")
+        self.logger.info(f"[{self.model_name}] Training completed. Best IoU achieved: {self.best_iou:.4f}\n")
+        return self.best_iou
 
 def main():
     """
@@ -298,21 +343,33 @@ def main():
     checkpoint management, and automatic preprocessing.
 
     Examples:
-        # Basic training with defaults
+        # Basic training with defaults (combined model)
         python seg_pipeline.py
+
+        # Train specific model
+        python seg_pipeline.py --model deeplabv3plus
+
+        # Train all models
+        python seg_pipeline.py --model all
+
+        # Track metrics to CSV
+        python seg_pipeline.py --track_metrics
 
         # Custom paths and parameters
         python seg_pipeline.py \\
             --image_folder data/images \\
             --mask_folder data/masks \\
             --batch_size 16 \\
-            --num_epochs 50
+            --num_epochs 50 \\
+            --model fat_net \\
+            --track_metrics
 
         # Resume training from checkpoint
         python seg_pipeline.py \\
             --ckpt ./checkpoints \\
             --image_folder data/images \\
-            --mask_folder data/masks
+            --mask_folder data/masks \\
+            --model combined
 
         # Force GPU training on specific device
         python seg_pipeline.py \\
@@ -353,6 +410,13 @@ def main():
         help='Checkpoint directory for saving/loading models (default: %(default)s)'
     )
 
+    # Model Selection
+    available_models = get_available_models()
+    p.add_argument(
+        '--model', type=str, default='combined',
+        help=f'Model to train. Options: {", ".join(available_models)}, or "all" to train all models (default: %(default)s)'
+    )
+
     # Training Hyperparameters
     p.add_argument(
         '--batch_size', type=int, default=8, metavar='BS',
@@ -365,6 +429,12 @@ def main():
     p.add_argument(
         '--learning_rate', type=float, default=1e-4, metavar='LR',
         help='Adam optimizer learning rate (default: %(default)s)'
+    )
+
+    # Metric Tracking
+    p.add_argument(
+        '--track_metrics', action='store_true',
+        help='Track loss and IoU for each epoch in a CSV file under outputs/'
     )
 
     # Data Loading & Device Configuration
@@ -387,6 +457,21 @@ def main():
     if args.visible_cuda_devices:
         os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_cuda_devices
 
+    # Determine which models to train
+    available_models = get_available_models()
+    if args.model == 'all':
+        models_to_train = available_models
+    elif args.model in available_models:
+        models_to_train = [args.model]
+    else:
+        print(f"Error: Unknown model '{args.model}'")
+        print(f"Available models: {', '.join(available_models)}, or 'all'")
+        return
+
+    print(f"\n{'='*60}")
+    print(f"Models to train: {', '.join(models_to_train)}")
+    print(f"{'='*60}\n")
+
     # --- Config Dictionary ---
     # Convert string paths from argparse into Path objects for internal use
     cfg = {
@@ -400,6 +485,7 @@ def main():
         'lr': args.learning_rate,
         'num_workers': args.num_workers,
         'force_device': args.force_device,
+        'track_metrics': args.track_metrics,
     }
 
     # --- Create necessary directories ---
@@ -413,21 +499,49 @@ def main():
         return
 
     # --- Main pipeline initiation ---
-    try:
-        pipeline = SegmentationPipeline(cfg)
-        pipeline.preprocess(cfg['image_folder'], cfg['mask_folder'])
-        pipeline.prepare_data()
-        pipeline.build_model()
-        pipeline.train()
-    except Exception as e:
-        # Use a logger if available, otherwise print
-        logger = getattr(pipeline, 'logger', None)
-        if logger:
-            logger.error(f"Pipeline failed: {e}", exc_info=True)
+    results = {}
+    for model_name in models_to_train:
+        print(f"\n{'='*60}")
+        print(f"Training model: {model_name}")
+        print(f"{'='*60}\n")
+        
+        try:
+            pipeline = SegmentationPipeline(cfg, model_name=model_name)
+            
+            # Only preprocess once for all models
+            if model_name == models_to_train[0]:
+                pipeline.preprocess(cfg['image_folder'], cfg['mask_folder'])
+                pipeline.prepare_data()
+            else:
+                # Reuse data loaders from first pipeline
+                # For simplicity, recreate them (could be optimized)
+                pipeline.prepare_data()
+            
+            pipeline.build_model()
+            best_iou = pipeline.train()
+            results[model_name] = best_iou
+            
+        except Exception as e:
+            # Use a logger if available, otherwise print
+            logger = getattr(pipeline, 'logger', None) if 'pipeline' in locals() else None
+            if logger:
+                logger.error(f"Pipeline failed for model '{model_name}': {e}", exc_info=True)
+            else:
+                print(f"An unexpected error occurred for model '{model_name}': {e}")
+                import traceback
+                traceback.print_exc()
+            results[model_name] = None
+
+    # --- Summary ---
+    print(f"\n{'='*60}")
+    print("TRAINING SUMMARY")
+    print(f"{'='*60}")
+    for model_name, best_iou in results.items():
+        if best_iou is not None:
+            print(f"{model_name:20s}: Best IoU = {best_iou:.4f}")
         else:
-            print(f"An unexpected error occurred: {e}")
-            import traceback
-            traceback.print_exc()
+            print(f"{model_name:20s}: FAILED")
+    print(f"{'='*60}\n")
 
 if __name__ == "__main__":
     main()

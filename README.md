@@ -202,3 +202,4 @@ If you use this code in your research, please cite:
 - Based on HI_MViT paper by Ding et al. (2023)
 - MedKAN architecture inspired by Kolmogorov-Arnold Networks
 - Built with TensorFlow and Keras
+- FAT-Net: Feature Adaptive Transformers for Automated Skin Lesion Segmentation (Wu et al., 2022)

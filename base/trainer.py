@@ -2,6 +2,8 @@ from tqdm import tqdm
 import torch
 import torch.nn as nn
 import logging
+import copy
+import os
 
 logger = logging.getLogger(__name__)
 
@@ -10,22 +12,35 @@ class Trainer:
     def __init__(
         self, 
         model,
+        model_name,
         optimizer,
         criterion,
         train_loader,
         val_loader, 
         device,
         epoch,
-        early_stopping = False
+        early_stopping = False,
+        patience = -1,
+        min_delta = 0,
+        save_path = None
     ):
         self.model = model
+        self.model_name = model_name
         self.optimizer = optimizer
         self.criterion = criterion
         self.train_loader = train_loader
         self.val_loader = val_loader
         self.device = device
         self.epoch = epoch
-        self.early_stopping = early_stopping
+        self.save_path = save_path
+        if early_stopping:
+            self.early_stopping = early_stopping
+            assert patience > 0, "Patience must be a positive integer greater than 0."
+            self.patience = patience
+            self.min_delta = min_delta
+            self._patience_counter = 0
+            self._best_val_loss = float('inf')
+            self._best_model_state = None
     
     def _train_one_epoch(self):
         self.model.train()
@@ -95,6 +110,24 @@ class Trainer:
                 f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.2f}%"
             )
 
+            if val_loss < self._best_val_loss - self.min_delta:
+                self._best_val_loss = val_loss
+                self._patience_counter = 0
+                self._best_model_state = copy.deepcopy(self.model.state_dict())
+                logger.info(f"Validation loss improved. Saving model.")
+            else:
+                self._patience_counter += 1
+                logger.info(f"No improvement. Patience counter: {self._patience_counter}/{self.patience}")
+
+            if self._patience_counter >= self.patience:
+                logger.info(f"Early stopping triggered after {epoch + 1} epochs.")
+                logger.info(f"Loading best model state (Val Loss: {self._best_val_loss:.4f})")
+
+                if self._best_model_state:
+                    self.model.load_state_dict(self._best_model_state)
+
+                break
+
         logger.info("Training Complete")
         
         history = {
@@ -104,4 +137,9 @@ class Trainer:
             "val_accuracy": val_accs
         }
 
-        return history
+        if self.save_path:
+            os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
+            logger.info(f"Saving best model to: {self.save_path}")
+            torch.save(self.model.state_dict(), self.save_path)
+
+        return self.model, history

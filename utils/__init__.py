@@ -37,6 +37,12 @@ except ImportError as e:
 
 from .logger import setup_logger
 from .system import get_num_workers
+from .model_visualization import (
+    print_model_summary,
+    visualize_model_architecture,
+    compare_models,
+    count_parameters
+)
 
 __all__ = [
     # Evaluation functions
@@ -63,5 +69,11 @@ __all__ = [
 
     # Basic utilities
     'setup_logger',
-    'get_num_workers'
+    'get_num_workers',
+    
+    # Model visualization
+    'print_model_summary',
+    'visualize_model_architecture',
+    'compare_models',
+    'count_parameters'
 ]

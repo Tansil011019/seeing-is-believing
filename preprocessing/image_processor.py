@@ -20,7 +20,7 @@ def process_single_image(args_tuple) -> Tuple[bool, int, str]:
     """
     (image_file, image_folder, mask_folder,
      output_image_folder, output_mask_folder,
-     apply_augmentation) = args_tuple
+     apply_augmentation, output_size) = args_tuple
     
     try:
         image_id = os.path.splitext(image_file)[0]
@@ -60,8 +60,8 @@ def process_single_image(args_tuple) -> Tuple[bool, int, str]:
                 output_mask_folder, output_mask_name
             )
             
-            save_image(aug_img, output_image_path)
-            save_mask(aug_mask, output_mask_path)
+            save_image(aug_img, output_image_path, size=output_size)
+            save_mask(aug_mask, output_mask_path, size=output_size)
         
         return (True, len(augmented_samples), None)
     

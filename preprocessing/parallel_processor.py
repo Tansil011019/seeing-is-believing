@@ -56,10 +56,21 @@ def process_dataset_parallel(
     output_mask_folder: str,
     apply_augmentation: bool = True,
     num_workers: int = 4,
-    logger=None
+    logger=None,
+    output_size: Tuple[int, int] = None
 ) -> int:
     """
     Process entire dataset with parallel workers
+    
+    Args:
+        image_folder: Path to input images
+        mask_folder: Path to input masks
+        output_image_folder: Path to save augmented images
+        output_mask_folder: Path to save augmented masks
+        apply_augmentation: Whether to apply augmentation
+        num_workers: Number of parallel workers
+        logger: Logger instance
+        output_size: Optional (width, height) to resize outputs to
     """
     os.makedirs(output_image_folder, exist_ok=True)
     os.makedirs(output_mask_folder, exist_ok=True)
@@ -71,11 +82,13 @@ def process_dataset_parallel(
     
     if logger:
         logger.info(f"Found {len(image_files)} images to process")
+        if output_size:
+            logger.info(f"Output images will be resized to {output_size}")
     
     process_args = [
         (img, image_folder, mask_folder,
          output_image_folder, output_mask_folder,
-         apply_augmentation)
+         apply_augmentation, output_size)
         for img in image_files
     ]
     

@@ -4,6 +4,7 @@ import torch.nn as nn
 import logging
 import copy
 import os
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -52,14 +53,14 @@ class Trainer:
             labels = labels.to(self.device)
 
             outputs = self.model(images)
-            loss = self.criterion(outputs, labels)
+            loss = self.criterion(outputs.logits, labels)
 
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
 
-            train_loss += loss.items()
-            _, predicted = torch.max(outputs.data, 1)
+            train_loss += loss.item()
+            _, predicted = torch.max(outputs.logits, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
         
@@ -80,10 +81,10 @@ class Trainer:
                 labels = labels.to(self.device)
 
                 outputs = self.model(images)
-                loss = self.criterion(outputs, labels)
+                loss = self.criterion(outputs.logits, labels)
 
                 val_loss += loss.item()
-                _, predicted = torch.max(outputs.data, 1)
+                _, predicted = torch.max(outputs.logits, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
@@ -96,6 +97,7 @@ class Trainer:
         train_accs = []
         val_losses = []
         val_accs = []
+        best_epoch = -1
         for epoch in range(self.epoch):
             logger.info(f"Epoch {epoch+1}/{self.epoch}")
             train_loss, train_acc = self._train_one_epoch()
@@ -113,6 +115,7 @@ class Trainer:
                 self._best_val_loss = val_loss
                 self._patience_counter = 0
                 self._best_model_state = copy.deepcopy(self.model.state_dict())
+                best_epoch = epoch
                 logger.info(f"Validation loss improved. Saving model.")
             else:
                 self._patience_counter += 1
@@ -123,7 +126,7 @@ class Trainer:
                 logger.info(f"Loading best model state (Val Loss: {self._best_val_loss:.4f})")
 
                 if self._best_model_state:
-                    self.model.load_state_dict(self._best_model_state)
+                    self.model.load_state_dict(self._best_model_state) 
 
                 break
 
@@ -139,6 +142,11 @@ class Trainer:
         if self.save_path:
             os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
             logger.info(f"Saving best model to: {self.save_path}")
-            torch.save(self.model.state_dict(), self.save_path)
+            
+            datastamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+            file_name = f"{self.model_name}_best_{datastamp}_{best_epoch}.pth"
+            full_save_path = os.path.join(os.path.dirname(self.save_path), file_name)
 
-        return self.model, history
+            torch.save(self.model.state_dict(), full_save_path)
+
+        return history

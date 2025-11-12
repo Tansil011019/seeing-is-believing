@@ -19,10 +19,13 @@ class Trainer:
         val_loader, 
         device,
         epoch,
+        scheduler = None,
         early_stopping = False,
         patience = -1,
         min_delta = 0,
-        save_path = None
+        save_path = None,
+        fold_index = None,
+        scheduler_step_at_epoch_end = True
     ):
         self.model = model
         self.model_name = model_name
@@ -33,6 +36,9 @@ class Trainer:
         self.device = device
         self.epoch = epoch
         self.save_path = save_path
+        self.scheduler = scheduler
+        self.scheduler_step_at_epoch_end = scheduler_step_at_epoch_end
+        self.fold_index = fold_index
         if early_stopping:
             self.early_stopping = early_stopping
             assert patience > 0, "Patience must be a positive integer greater than 0."
@@ -58,6 +64,9 @@ class Trainer:
             self.optimizer.zero_grad()
             loss.backward()
             self.optimizer.step()
+
+            if not self.scheduler_step_at_epoch_end and self.scheduler is not None:
+                self.scheduler.step()
 
             train_loss += loss.item()
             _, predicted = torch.max(outputs.logits, 1)
@@ -111,6 +120,12 @@ class Trainer:
                 f"Val Loss: {val_loss:.4f} | Val Acc: {val_acc:.2f}%"
             )
 
+            if self.scheduler_step_at_epoch_end and self.scheduler is not None:
+                if isinstance(self.scheduler, torch.optim.lr_scheduler.ReduceLROnPlateau):
+                    self.scheduler.step(val_loss)
+                else:
+                    self.scheduler.step()
+
             if val_loss < self._best_val_loss - self.min_delta:
                 self._best_val_loss = val_loss
                 self._patience_counter = 0
@@ -140,12 +155,14 @@ class Trainer:
         }
 
         if self.save_path:
-            os.makedirs(os.path.dirname(self.save_path), exist_ok=True)
-            logger.info(f"Saving best model to: {self.save_path}")
+            folder_path = os.path.dirname(f"{self.save_path}/{self.model_name}")
+            os.makedirs(os.path.dirname(folder_path), exist_ok=True)
+            logger.info(f"Saving best model to: {folder_path}")
             
             datastamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-            file_name = f"{self.model_name}_best_{datastamp}_{best_epoch}.pth"
-            full_save_path = os.path.join(os.path.dirname(self.save_path), file_name)
+            fold_part = f"fold_{self.fold_index}_" if self.fold_index is not None else ""
+            file_name = f"{self.model_name}_best_{datastamp}_{fold_part}{best_epoch}.pt"
+            full_save_path = os.path.join(os.path.dirname(folder_path), file_name)
 
             torch.save(self.model.state_dict(), full_save_path)
 

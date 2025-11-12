@@ -6,13 +6,10 @@ logger = logging.getLogger(__name__)
 
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def train(cfg: DictConfig) -> None:
-    logger.info("Started Training")
-
     logger.info("Configuration: ")
     logger.info(f"\t{OmegaConf.to_yaml(cfg)}") 
 
     logger.info("Phase 1: Dataloader")
-    logger.info("Phase 1.1: Data Transform")
     dataloader_config = cfg.dataloader
     train_loader = hydra.utils.instantiate(dataloader_config.train_loader)
     val_loader = hydra.utils.instantiate(dataloader_config.val_loader)
@@ -38,6 +35,8 @@ def train(cfg: DictConfig) -> None:
         return 
     logger.info("Dataloader Loaded")
 
+    logger.info("Phase 2: Training")
+    
     logger.info("Training Complete")   
 
 if __name__ == '__main__':

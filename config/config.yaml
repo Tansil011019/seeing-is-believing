@@ -1,9 +1,16 @@
 defaults:
   - model: resnet18
-  # - optimizer: adam
-  # - criterion: cross_entropy
+  - strategy: kfold_cross_validation
+  - optimizer: adam
+  - loss: cross_entropy
+  - dataset: class_data
   - dataloader: class_data
+  - scheduler: none 
   - _self_
   - override hydra/job_logging: custom
 
 seed: 42
+paths: 
+  data_dir: /data/dataset/ISIC2018_Task3_Training_Input
+  results_dir: results/
+  csv_file: notebooks/ISIC2018_Task3_Training_Input/cleaned_data.csv

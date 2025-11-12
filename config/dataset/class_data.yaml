@@ -1,0 +1,45 @@
+train_dataset:
+  _target_: utils.dataset.ImageDataset
+  df: 
+    _target_: pandas.read_csv
+    filepath_or_buffer: ${paths.csv_file}
+  file_path: ${paths.data_dir}
+  transform:
+    _target_: torchvision.transforms.Compose
+    transforms:
+      - _target_: torchvision.transforms.ToTensor
+      - _target_: utils.transforms.ShadesOfGrayTransform
+        p: 6
+      - _target_: torchvision.transforms.Resize
+        size: 280 # (1.25 * 224)
+      - _target_: torchvision.transforms.RandomResizedCrop
+        size: 224
+        scale: [0.8, 1.0]
+      - _target_: torchvision.transforms.RandomHorizontalFlip
+      - _target_: utils.transforms.RandomDiscreteRotation
+        angles: [0, 90, 180, 270]
+      - _target_: torchvision.transforms.ColorJitter
+        brightness: 0.1
+        contrast: 0.1
+        saturation: 0.1
+      - _target_: torchvision.transforms.Normalize
+        mean: [0.7635, 0.5461, 0.5705]
+        std: [0.1412, 0.1529, 0.1703]
+
+val_dataset:
+  _target_: utils.dataset.ImageDataset
+  df: 
+    _target_: pandas.read_csv
+    filepath_or_buffer: ${paths.csv_file}
+  file_path: ${paths.data_dir}
+  transform:
+    _target_: torchvision.transforms.Compose
+    transforms:
+      - _target_: torchvision.transforms.ToTensor
+      - _target_: utils.transforms.ShadesOfGrayTransform
+        p: 6
+      - _target_: torchvision.transforms.Resize
+        size: 224
+      - _target_: torchvision.transforms.Normalize
+        mean: [0.7635, 0.5461, 0.5705]
+        std: [0.1412, 0.1529, 0.1703]

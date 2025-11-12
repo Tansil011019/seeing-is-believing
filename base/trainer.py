@@ -155,14 +155,14 @@ class Trainer:
         }
 
         if self.save_path:
-            folder_path = os.path.dirname(f"{self.save_path}/{self.model_name}")
-            os.makedirs(os.path.dirname(folder_path), exist_ok=True)
+            folder_path = os.path.join(self.save_path, self.model_name)
+            os.makedirs(folder_path, exist_ok=True)
             logger.info(f"Saving best model to: {folder_path}")
             
             datastamp = datetime.now().strftime("%Y%m%d-%H%M%S")
             fold_part = f"fold_{self.fold_index}_" if self.fold_index is not None else ""
             file_name = f"{self.model_name}_best_{datastamp}_{fold_part}{best_epoch}.pt"
-            full_save_path = os.path.join(os.path.dirname(folder_path), file_name)
+            full_save_path = os.path.join(folder_path, file_name)
 
             torch.save(self.model.state_dict(), full_save_path)
 

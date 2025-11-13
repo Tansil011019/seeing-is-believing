@@ -5,8 +5,8 @@ from hydra.utils import instantiate
 import pandas as pd
 from torch.utils.data import Subset
 import torch
-from base import Trainer
 import os
+from datetime import datetime
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "1, 2, 3"
 logger = logging.getLogger(__name__)
@@ -29,6 +29,7 @@ def train(cfg: DictConfig) -> None:
 
     histories = []
     skf = instantiate(cfg.strategy)
+    datastamp = datetime.now().strftime("%Y%m%d-%H%M%S")
     for fold_index, (train_indices, val_indices) in enumerate(skf.split(df, df['label'].values)):
         logger.info(f"Fold {fold_index + 1}/{cfg.strategy.n_splits}")
         
@@ -60,7 +61,8 @@ def train(cfg: DictConfig) -> None:
             else:
                 scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
 
-        trainer = Trainer(
+        trainer = instantiate(
+            cfg.training,
             model=model,
             model_name=cfg.model.name,
             optimizer=optimizer,
@@ -73,7 +75,7 @@ def train(cfg: DictConfig) -> None:
             early_stopping=cfg.model.training.early_stopping,
             patience=cfg.model.training.patience,
             min_delta=cfg.model.training.min_delta,
-            save_path=f"{cfg.paths.results_dir}",
+            save_path=f"{cfg.paths.results_dir}/{cfg.model.name}/{datastamp}",
             fold_index=fold_index,
             scheduler_step_at_epoch_end=scheduler_step_at_epoch_end
         )
@@ -83,7 +85,7 @@ def train(cfg: DictConfig) -> None:
 
         os.makedirs(cfg.paths.results_dir, exist_ok=True)
 
-    with open(f"{cfg.paths.results_dir}/{cfg.model.name}/history_{cfg.model.name}.csv", 'w') as f:
+    with open(f"{cfg.paths.results_dir}/{cfg.model.name}/{datastamp}/history_{cfg.model.name}.csv", 'w') as f:
         pd.DataFrame(histories).to_csv(f, index=False)
     
     logger.info("Training Complete")   

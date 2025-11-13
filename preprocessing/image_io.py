@@ -24,13 +24,31 @@ def load_mask(mask_path: str) -> Optional[np.ndarray]:
     return mask
 
 
-def save_image(image: np.ndarray, output_path: str) -> None:
-    """Save RGB image (converts to BGR for cv2)"""
+def save_image(image: np.ndarray, output_path: str, size: Optional[Tuple[int, int]] = None) -> None:
+    """
+    Save RGB image (converts to BGR for cv2)
+    
+    Args:
+        image: Input RGB image
+        output_path: Path to save the image
+        size: Optional (width, height) tuple to resize before saving
+    """
+    if size is not None:
+        image = cv2.resize(image, size, interpolation=cv2.INTER_LINEAR)
     cv2.imwrite(output_path, cv2.cvtColor(image, cv2.COLOR_RGB2BGR))
 
 
-def save_mask(mask: np.ndarray, output_path: str) -> None:
-    """Save mask"""
+def save_mask(mask: np.ndarray, output_path: str, size: Optional[Tuple[int, int]] = None) -> None:
+    """
+    Save mask
+    
+    Args:
+        mask: Input binary mask
+        output_path: Path to save the mask
+        size: Optional (width, height) tuple to resize before saving
+    """
+    if size is not None:
+        mask = cv2.resize(mask, size, interpolation=cv2.INTER_NEAREST)
     cv2.imwrite(output_path, mask)
 
 

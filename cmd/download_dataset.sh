@@ -57,6 +57,7 @@ done
 echo "Extracting ground truth files..."
 # Find and extract any zip files in the datasets directory
 find datasets/ -name "*GroundTruth.zip" -exec unzip -o {} -d datasets/ \;
+unzip -o datasets/ISIC2018_Task2_Training_GroundTruth_v3.zip -d datasets/
 
 echo "Dataset download and extraction completed!"
 echo "Data is available in the datasets/ directory"

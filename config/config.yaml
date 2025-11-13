@@ -1,11 +1,12 @@
 defaults:
-  - model: resnet18
+  - model: squeezenet1_1
   - strategy: kfold_cross_validation
   - optimizer: adam
   - loss: cross_entropy
   - dataset: class_data
   - dataloader: class_data
   - scheduler: none 
+  - training: timm_trainer
   - _self_
   - override hydra/job_logging: custom
 

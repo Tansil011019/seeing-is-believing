@@ -1,0 +1,15 @@
+name: seresnet-50
+
+params:
+  _target_: timm.create_model
+  pretrained: true
+  model_name: seresnet50.a2_in1k
+  num_classes: 10
+
+training:
+  epochs: 1
+  early_stopping: true
+  save_path: "seresnet50_best_model.pt"
+  device: cuda:1
+  patience: 10
+  min_delta: 0.0 

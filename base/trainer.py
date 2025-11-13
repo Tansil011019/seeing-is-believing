@@ -47,6 +47,9 @@ class Trainer:
             self._patience_counter = 0
             self._best_val_loss = float('inf')
             self._best_model_state = None
+
+    def _get_logits_from_outputs(self, outputs):
+        raise NotImplementedError("This method should be implemented in subclasses.")
     
     def _train_one_epoch(self):
         self.model.train()
@@ -59,7 +62,8 @@ class Trainer:
             labels = labels.to(self.device)
 
             outputs = self.model(images)
-            loss = self.criterion(outputs.logits, labels)
+            output_loss = self._get_logits_from_outputs(outputs)
+            loss = self.criterion(output_loss, labels)
 
             self.optimizer.zero_grad()
             loss.backward()
@@ -69,7 +73,7 @@ class Trainer:
                 self.scheduler.step()
 
             train_loss += loss.item()
-            _, predicted = torch.max(outputs.logits, 1)
+            _, predicted = torch.max(output_loss, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
         
@@ -90,10 +94,11 @@ class Trainer:
                 labels = labels.to(self.device)
 
                 outputs = self.model(images)
-                loss = self.criterion(outputs.logits, labels)
+                output_loss = self._get_logits_from_outputs(outputs)
+                loss = self.criterion(output_loss, labels)
 
                 val_loss += loss.item()
-                _, predicted = torch.max(outputs.logits, 1)
+                _, predicted = torch.max(output_loss, 1)
                 total += labels.size(0)
                 correct += (predicted == labels).sum().item()
 
@@ -155,7 +160,7 @@ class Trainer:
         }
 
         if self.save_path:
-            folder_path = os.path.join(self.save_path, self.model_name)
+            folder_path = self.save_path
             os.makedirs(folder_path, exist_ok=True)
             logger.info(f"Saving best model to: {folder_path}")
             

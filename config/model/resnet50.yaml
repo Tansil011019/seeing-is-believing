@@ -1,15 +1,15 @@
-name: resnet-18
+name: resnet-50
 
 params:
   _target_: transformers.ResNetForImageClassification.from_pretrained
-  pretrained_model_name_or_path: microsoft/resnet-18
+  pretrained_model_name_or_path: microsoft/resnet-50
   num_labels: 10
   ignore_mismatched_sizes: true
 
 training:
-  epochs: 100
+  epochs: 1
   early_stopping: true
-  save_path: "resnet18_best_model.pt"
+  save_path: "resnet50_best_model.pt"
   device: cuda:1
   patience: 10
   min_delta: 0.0

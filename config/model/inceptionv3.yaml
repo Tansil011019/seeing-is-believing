@@ -1,0 +1,15 @@
+name: inception-v3
+
+params:
+  _target_: timm.create_model
+  pretrained: true
+  model_name: inception_v3
+  num_classes: 10
+
+training:
+  epochs: 1
+  early_stopping: true
+  save_path: "inceptionv3_best_model.pt"
+  device: cuda:1
+  patience: 10
+  min_delta: 0.0

@@ -11,7 +11,7 @@ from .augmentation_pipeline import (
 )
 
 from .parallel_processor import process_dataset_parallel
-from .dataset import SegmentationDataset
+from utils.dataset.segmentation_dataset import SegmentationDataset
 from .attr_dataset import AttributeDataset
 
 from .attr_preprocessing import (

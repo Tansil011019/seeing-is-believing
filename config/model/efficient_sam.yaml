@@ -1,0 +1,13 @@
+# For segmentation only
+name: efficient_sam
+
+params:
+  _target_: models.EfficientSAMCustom
+
+training:
+  epochs: 100
+  early_stopping: true
+  save_path: "efficient_sam_best_model.pt"
+  device: cuda:0
+  patience: 10
+  min_delta: 0.0 

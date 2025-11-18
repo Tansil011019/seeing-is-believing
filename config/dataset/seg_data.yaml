@@ -1,0 +1,9 @@
+train_dataset :
+  _target_ : utils.dataset.SegmentationDataset
+  img_dir : ${paths.train_img_dir}
+  mask_dir : ${paths.train_mask_dir}
+
+val_dataset :
+  _target_ : utils.dataset.SegmentationDataset
+  img_dir : ${paths.val_img_dir}
+  mask_dir : ${paths.val_mask_dir}

@@ -7,26 +7,25 @@ import torch.nn.functional as F
 from transformers import SegformerForSemanticSegmentation
 
 
-class MITTransferModel(nn.Module):
+class SegformerB1(nn.Module):
     """
     MiT (Mix Transformer) based transfer learning model
     Uses pretrained keras/mit_b1_ade20k_512
     Note: This model may require special handling for keras weights
     """
     
-    def __init__(self, model_name="nvidia/segformer-b1-finetuned-ade-512-512", freeze_encoder=False):
-        super(MITTransferModel, self).__init__()
+    def __init__(self):
+        super(SegformerB1, self).__init__()
         
         # Using Segformer B1 as MIT-B1 architecture
         self.model = SegformerForSemanticSegmentation.from_pretrained(
-            model_name,
+            "nvidia/segformer-b1-finetuned-ade-512-512",
             num_labels=1,
             ignore_mismatched_sizes=True
         )
         
-        if freeze_encoder:
-            for param in self.model.segformer.encoder.parameters():
-                param.requires_grad = False
+        # for param in self.model.segformer.encoder.parameters():
+        #     param.requires_grad = False
     
     def forward(self, x):
         """

@@ -1,0 +1,25 @@
+defaults:
+  - model: segformer_b1
+  - optimizer: adam_w
+  - loss: cross_entropy
+  - dataset: seg_data
+  - dataloader: seg_data
+  - scheduler: none
+  - training: segmentation_trainer
+  # - _self_
+  # - override hydra/job_logging: custom
+
+seed: 42
+
+paths:
+  # train_img_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1-2_Training_Input
+  # train_mask_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1_Training_GroundTruth
+  # val_img_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1-2_Validation_Input
+  # val_mask_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1_Validation_GroundTruth
+  # results_dir: ${hydra:runtime.cwd}/results/task1/
+
+  train_img_dir: ${hydra:runtime.cwd}/dummy_datasets/inputs
+  train_mask_dir: ${hydra:runtime.cwd}/dummy_datasets/gt
+  val_img_dir: ${hydra:runtime.cwd}/dummy_datasets/inputs
+  val_mask_dir: ${hydra:runtime.cwd}/dummy_datasets/gt
+  results_dir: ${hydra:runtime.cwd}/results/task1/

@@ -26,8 +26,8 @@ def augment_image_and_mask(
         logger.debug("Starting augmentation process")
     
     augmented_data = []
-    rotation_angles = [45, 90, 135, 180, 225, 270, 315]
-    dilation_scales = [(1.0, 1.5), (1.5, 1.0)]
+    rotation_angles = [90, 180, 270]
+    dilation_scales = []
     
     # Original image
     augmented_data.append((image.copy(), mask.copy(), "original"))

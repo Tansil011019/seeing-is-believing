@@ -15,7 +15,6 @@ Available Models:
     - adaptive_beit: BEiT with additional adaptation layers
 
 Training Strategies:
-    - Freeze encoder: Fast training, requires less data (recommended for small datasets)
     - Full fine-tuning: Better performance, requires more data and compute
     - Discriminative learning rates: Different LR for encoder/decoder when not frozen
     - Mixed precision training: Faster training with AMP (enabled by default)
@@ -25,20 +24,20 @@ Installation:
 
 Usage Examples:
     # Quick start with frozen encoder (recommended for first try)
-    python seg_transfer_learning_pipeline.py --model segformer --freeze_encoder
+    python seg_transfer_learning_pipeline.py --model segformer
     
     # Full fine-tuning for maximum performance
     python seg_transfer_learning_pipeline.py --model beit --num_epochs 100
     
     # Train all models with metrics tracking
-    python seg_transfer_learning_pipeline.py --model all --track_metrics --freeze_encoder
+    python seg_transfer_learning_pipeline.py --model all --track_metrics
 """
 import os
 import argparse
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, random_split
+from torch.utils.data import DataLoader
 from tqdm import tqdm
 from pathlib import Path
 from typing import Optional, Dict, Any
@@ -47,7 +46,7 @@ from datetime import datetime
 
 # Project imports
 from preprocessing import process_dataset_parallel, SegmentationDataset
-from seg_models.transfer_learning_models import (
+from models.seg_factory import (
     get_transfer_model, 
     get_available_transfer_models
 )
@@ -55,8 +54,9 @@ from evaluation import CombinedLoss, evaluate_model
 from utils import setup_logger, get_num_workers
 
 # Constants
-AUGMENTATION_FACTOR = 24
+AUGMENTATION_FACTOR = 4
 IMG_EXTENSIONS = {'.png', '.jpg', '.jpeg'}
+os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 
 
 class TransferLearningPipeline:
@@ -65,11 +65,13 @@ class TransferLearningPipeline:
     Supports multiple backbone architectures from HuggingFace
     """
     
-    def __init__(self, cfg: Dict[str, Any], model_name: str = 'segformer', 
-                 freeze_encoder: bool = False, logger: Optional[Any] = None):
+    def __init__(self, 
+                 cfg: Dict[str, Any], 
+                 model_name: str = 'segformer_b0', 
+                 logger: Optional[Any] = None):
+        
         self.cfg = cfg
         self.model_name = model_name
-        self.freeze_encoder = freeze_encoder
         self.logger = logger or setup_logger(name='transfer_pipe')
         
         # Device configuration
@@ -193,27 +195,38 @@ class TransferLearningPipeline:
         return False
     
     def prepare_data(self):
-        """Create and split dataset into train/validation DataLoaders"""
+        """Create train and validation DataLoaders from separate datasets"""
         self.logger.info("Preparing data loaders...")
         
-        ds = SegmentationDataset(
+        # Training dataset (augmented)
+        train_ds = SegmentationDataset(
             str(self.cfg['aug_img']),
             str(self.cfg['aug_mask']),
             (256, 256)
         )
         
-        if len(ds) == 0:
-            self.logger.error("Dataset is empty. Check augmented data folders.")
+        if len(train_ds) == 0:
+            self.logger.error("Training dataset is empty. Check augmented data folders.")
             raise ValueError("Cannot train on an empty dataset.")
         
-        # Split dataset
-        tr_sz = int(0.8 * len(ds))
-        val_sz = len(ds) - tr_sz
-        self.logger.info(f"Total dataset size: {len(ds)}. Splitting into {tr_sz} (train) / {val_sz} (val).")
-        tr_ds, val_ds = random_split(ds, [tr_sz, val_sz])
+        self.logger.info(f"Training dataset size: {len(train_ds)}")
         
+        # Validation dataset (separate validation set)
+        val_ds = SegmentationDataset(
+            str(self.cfg['val_image_folder']),
+            str(self.cfg['val_mask_folder']),
+            (256, 256)
+        )
+        
+        if len(val_ds) == 0:
+            self.logger.error("Validation dataset is empty. Check validation data folders.")
+            raise ValueError("Cannot validate on an empty dataset.")
+        
+        self.logger.info(f"Validation dataset size: {len(val_ds)}")
+        
+        # Create data loaders
         self.train_loader = DataLoader(
-            tr_ds,
+            train_ds,
             self.cfg['bs'],
             shuffle=True,
             num_workers=self.num_workers,
@@ -231,10 +244,9 @@ class TransferLearningPipeline:
     def build_model(self):
         """Initialize transfer learning model, optimizer, scheduler, and loss"""
         self.logger.info(f"Building transfer learning model: {self.model_name}...")
-        self.logger.info(f"Freeze encoder: {self.freeze_encoder}")
         
         try:
-            self.model = get_transfer_model(self.model_name, freeze_encoder=self.freeze_encoder)
+            self.model = get_transfer_model(self.model_name)
         except Exception as e:
             self.logger.error(f"Failed to load model {self.model_name}: {e}")
             raise
@@ -248,20 +260,25 @@ class TransferLearningPipeline:
         self.logger.info(f"Trainable parameters: {trainable_params:,}")
         
         # Optimizer with different learning rates for pretrained vs new layers
-        if self.freeze_encoder:
-            # Only optimize unfrozen parameters
-            params = [p for p in self.model.parameters() if p.requires_grad]
-            self.opt = optim.AdamW(params, lr=self.cfg['lr'], weight_decay=0.01)
-        else:
-            # Use discriminative learning rates
-            base_lr = self.cfg['lr']
-            params = [
-                {'params': self._get_encoder_params(), 'lr': base_lr * 0.1},
-                {'params': self._get_decoder_params(), 'lr': base_lr}
-            ]
-            self.opt = optim.AdamW(params, weight_decay=0.01)
+        # if self.freeze_encoder:
+        #     # Only optimize unfrozen parameters
+        #     params = [p for p in self.model.parameters() if p.requires_grad]
+        #     self.opt = optim.AdamW(params, lr=self.cfg['lr'], weight_decay=0.01)
+        # else:
+        #     # Use discriminative learning rates
+        #     base_lr = self.cfg['lr']
+        #     params = [
+        #         {'params': self._get_encoder_params(), 'lr': base_lr * 0.1},
+        #         {'params': self._get_decoder_params(), 'lr': base_lr}
+        #     ]
+        #     self.opt = optim.AdamW(params, weight_decay=0.01)
+        base_lr = self.cfg['lr']
+        params = [
+            {'params': self._get_encoder_params(), 'lr': base_lr * 0.1},
+            {'params': self._get_decoder_params(), 'lr': base_lr}
+        ]
+        self.opt = optim.AdamW(params, weight_decay=0.01)
         
-        # Learning rate scheduler (verbose removed - not supported in all PyTorch versions)
         self.sch = optim.lr_scheduler.ReduceLROnPlateau(
             self.opt, mode='max', patience=5, factor=0.5
         )
@@ -269,8 +286,6 @@ class TransferLearningPipeline:
         # Loss function
         self.crit = CombinedLoss(bce_weight=0.5, dice_weight=0.5)
         
-        # Load checkpoint if exists
-        self._load_checkpoint_if_exists()
         
         self.logger.info(f"Model '{self.model_name}' built successfully.\n")
     
@@ -290,45 +305,35 @@ class TransferLearningPipeline:
                 decoder_params.append(param)
         return decoder_params
     
-    def _load_checkpoint_if_exists(self):
-        """Load the latest checkpoint if available"""
-        if not self.ckpt_dir.exists():
-            self.logger.info("Checkpoint directory not found. Starting from scratch.")
-            return
+    def validate(self) -> Dict[str, float]:
+        """
+        Validate model on the validation set
         
-        if self.best_ckpt_path.exists():
-            ckpt_path = self.best_ckpt_path
-        else:
-            try:
-                ckpt_path = next(self.ckpt_dir.glob('*.pth'))
-            except StopIteration:
-                self.logger.info("No checkpoint files found. Starting from scratch.")
-                return
+        Returns:
+            Dictionary containing validation metrics (loss, iou, dice, etc.)
+        """
+        self.logger.info("Running validation...")
+        metrics = evaluate_model(self.model, self.val_loader, self.device)
+        # Compute validation loss
+        self.model.eval()
+        val_loss = 0.0
+        with torch.no_grad():
+            for b in self.val_loader:
+                imgs = b['image'].to(self.device, non_blocking=True)
+                masks = b['mask'].to(self.device, non_blocking=True)
+                
+                with torch.cuda.amp.autocast(enabled=self.use_amp):
+                    preds = self.model(imgs)
+                    loss = self.crit(preds, masks)
+                
+                val_loss += loss.item()
+
+        metrics['loss'] = val_loss / len(self.val_loader)
+        self.logger.info(
+            f"Validation IoU: {metrics['iou']:.4f}"
+        )
         
-        self.logger.info(f"Loading checkpoint from: {ckpt_path}")
-        try:
-            checkpoint = torch.load(ckpt_path, map_location=self.device)
-            
-            if isinstance(checkpoint, dict):
-                model_state = checkpoint.get('model_state_dict', checkpoint.get('model', checkpoint))
-                self.model.load_state_dict(model_state)
-                
-                opt_state = checkpoint.get('optimizer_state_dict')
-                if opt_state:
-                    self.opt.load_state_dict(opt_state)
-                    self.logger.info("Optimizer state loaded.")
-                
-                iou = checkpoint.get('best_val_iou', checkpoint.get('iou'))
-                if iou is not None:
-                    self.best_iou = iou
-                    self.logger.info(f"Resuming from checkpoint with best IoU: {self.best_iou:.4f}")
-            else:
-                self.model.load_state_dict(checkpoint)
-            
-            self.logger.info("Checkpoint loaded successfully!")
-        except Exception as e:
-            self.logger.warning(f"Failed to load checkpoint: {e}")
-            self.logger.warning("Starting training from scratch...")
+        return metrics
     
     def train(self):
         """Main training and validation loop"""
@@ -337,7 +342,6 @@ class TransferLearningPipeline:
         self.logger.info(f"Batch Size: {self.cfg['bs']}")
         self.logger.info(f"Base Learning Rate: {self.cfg['lr']}")
         self.logger.info(f"Device: {self.device}")
-        self.logger.info(f"Freeze Encoder: {self.freeze_encoder}")
         
         for ep in range(1, self.cfg['epochs'] + 1):
             self.model.train()
@@ -369,8 +373,8 @@ class TransferLearningPipeline:
             
             avg_train_loss = train_loss / len(self.train_loader)
             
-            # Validation
-            m = evaluate_model(self.model, self.val_loader, self.device)
+            # Validation on separate validation set
+            m = self.validate()
             val_iou = m['iou']
             
             # Get current learning rate
@@ -404,7 +408,6 @@ class TransferLearningPipeline:
                     'best_val_iou': self.best_iou,
                     'epoch': ep,
                     'model_name': self.model_name,
-                    'freeze_encoder': self.freeze_encoder,
                 }
                 torch.save(save_data, self.best_ckpt_path)
         
@@ -424,13 +427,13 @@ def main():
     
     Examples:
         # Train with Segformer (frozen encoder)
-        python seg_transfer_learning_pipeline.py --model segformer --freeze_encoder
+        python seg_transfer_learning_pipeline.py --model segformer
         
         # Train with BEiT (full fine-tuning)
         python seg_transfer_learning_pipeline.py --model beit
         
         # Train all transfer learning models
-        python seg_transfer_learning_pipeline.py --model all --freeze_encoder
+        python seg_transfer_learning_pipeline.py --model all
         
         # Custom training with metrics tracking
         python seg_transfer_learning_pipeline.py \\
@@ -477,6 +480,16 @@ def main():
         help='Path to save augmented masks (default: %(default)s)'
     )
     p.add_argument(
+        '--val_image_folder', type=str,
+        default="datasets/ISIC2018_Task1-2_Validation_Input",
+        help='Path to validation images (default: %(default)s)'
+    )
+    p.add_argument(
+        '--val_mask_folder', type=str,
+        default="datasets/ISIC2018_Task1_Validation_GroundTruth",
+        help='Path to validation masks (default: %(default)s)'
+    )   
+    p.add_argument(
         '--ckpt', type=str,
         default="./checkpoints",
         help='Checkpoint directory (default: %(default)s)'
@@ -488,10 +501,10 @@ def main():
         '--model', type=str, default='segformer',
         help=f'Transfer learning model. Options: {", ".join(available_models)}, or "all" (default: %(default)s)'
     )
-    p.add_argument(
-        '--freeze_encoder', action='store_true',
-        help='Freeze encoder weights for faster training'
-    )
+    # p.add_argument(
+    #     '--freeze_encoder', action='store_true',
+    #     help='Freeze encoder weights for faster training'
+    # )
     
     # Training hyperparameters
     p.add_argument(
@@ -556,7 +569,6 @@ def main():
     print(f"\n{'='*60}")
     print(f"Transfer Learning Pipeline")
     print(f"Models to train: {', '.join(models_to_train)}")
-    print(f"Freeze encoder: {args.freeze_encoder}")
     print(f"{'='*60}\n")
     
     # Configuration dictionary
@@ -565,6 +577,8 @@ def main():
         'aug_mask': Path(args.aug_mask_folder),
         'image_folder': Path(args.image_folder),
         'mask_folder': Path(args.mask_folder),
+        'val_image_folder': Path(args.val_image_folder),
+        'val_mask_folder': Path(args.val_mask_folder),
         'ckpt': Path(args.ckpt),
         'bs': args.batch_size,
         'epochs': args.num_epochs,
@@ -584,6 +598,14 @@ def main():
         print(f"Error creating directories: {e}")
         return
     
+    # Verify validation folders exist
+    if not cfg['val_image_folder'].exists():
+        print(f"Error: Validation image folder not found: {cfg['val_image_folder']}")
+        return
+    if not cfg['val_mask_folder'].exists():
+        print(f"Error: Validation mask folder not found: {cfg['val_mask_folder']}")
+        return
+    
     # Train models
     results = {}
     for idx, model_name in enumerate(models_to_train):
@@ -595,7 +617,6 @@ def main():
             pipeline = TransferLearningPipeline(
                 cfg,
                 model_name=model_name,
-                freeze_encoder=args.freeze_encoder
             )
             
             # Preprocess only once for the first model

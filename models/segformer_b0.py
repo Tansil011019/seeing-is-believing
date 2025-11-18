@@ -7,26 +7,25 @@ import torch.nn.functional as F
 from transformers import SegformerForSemanticSegmentation
 
 
-class SegformerTransferModel(nn.Module):
+class SegformerB0(nn.Module):
     """
     Segformer-based transfer learning model for binary segmentation
     Uses pretrained nvidia/segformer-b0-finetuned-ade-512-512
     """
     
-    def __init__(self, model_name="nvidia/segformer-b0-finetuned-ade-512-512", freeze_encoder=False):
-        super(SegformerTransferModel, self).__init__()
+    def __init__(self):
+        super(SegformerB0, self).__init__()
         
         # Load pretrained Segformer model
         self.model = SegformerForSemanticSegmentation.from_pretrained(
-            model_name,
+            "nvidia/segformer-b0-finetuned-ade-512-512",
             num_labels=1,  # Binary segmentation
             ignore_mismatched_sizes=True
         )
         
         # Optionally freeze encoder layers for fine-tuning
-        if freeze_encoder:
-            for param in self.model.segformer.encoder.parameters():
-                param.requires_grad = False
+        # for param in self.model.segformer.encoder.parameters():
+        #     param.requires_grad = False
     
     def forward(self, x):
         """

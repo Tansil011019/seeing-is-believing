@@ -1,0 +1,11 @@
+train_loader :
+  _target_: torch.utils.data.DataLoader
+  batch_size: 16
+  shuffle: true
+  num_workers: 64
+
+val_loader :
+  _target_: torch.utils.data.DataLoader
+  batch_size: 16
+  shuffle: false
+  num_workers: 64

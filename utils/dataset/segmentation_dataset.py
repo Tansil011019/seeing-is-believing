@@ -14,9 +14,9 @@ class SegmentationDataset(Dataset):
     
     def __init__(
         self,
-        image_folder: str,
-        mask_folder: str,
-        image_size: Tuple[int, int] = (256, 256),
+        img_dir: str,
+        mask_dir: str,
+        image_size: Tuple[int, int] = (1024, 1024),
         normalize: bool = True
     ):
         """
@@ -24,17 +24,17 @@ class SegmentationDataset(Dataset):
         
         Args:
             image_folder: Path to images
-            mask_folder: Path to masks
+            mask_dir: Path to masks
             image_size: Target size for resizing
             normalize: Whether to normalize images
         """
-        self.image_folder = image_folder
-        self.mask_folder = mask_folder
+        self.img_dir = img_dir
+        self.mask_dir = mask_dir
         self.image_size = image_size
         self.normalize = normalize
         
         self.image_files = sorted([
-            f for f in os.listdir(image_folder)
+            f for f in os.listdir(img_dir)
             if f.endswith('.png') or f.endswith('.jpg')
         ])
     
@@ -46,7 +46,7 @@ class SegmentationDataset(Dataset):
         image_id = os.path.splitext(image_file)[0]
         
         # Load and process image
-        image_path = os.path.join(self.image_folder, image_file)
+        image_path = os.path.join(self.img_dir, image_file)
         image = self._load_image(image_path)
         
         # Load and process mask
@@ -77,7 +77,7 @@ class SegmentationDataset(Dataset):
         """Find mask path for given image ID"""
         for ext in ['.png', '.jpg', '_segmentation.png']:
             mask_file = image_id + ext
-            mask_path = os.path.join(self.mask_folder, mask_file)
+            mask_path = os.path.join(self.mask_dir, mask_file)
             if os.path.exists(mask_path):
                 return mask_path
         
@@ -85,7 +85,7 @@ class SegmentationDataset(Dataset):
         base_id = image_id.split('_')[0]
         for ext in ['.png', '.jpg', '_segmentation.png']:
             mask_file = base_id + ext
-            mask_path = os.path.join(self.mask_folder, mask_file)
+            mask_path = os.path.join(self.mask_dir, mask_file)
             if os.path.exists(mask_path):
                 return mask_path
         

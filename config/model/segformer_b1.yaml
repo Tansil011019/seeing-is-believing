@@ -1,0 +1,15 @@
+name: segformer_b1
+
+params:
+  _target_: transformers.SegformerForSemanticSegmentation.from_pretrained
+  pretrained_model_name_or_path: nvidia/segformer-b1-finetuned-ade-512-512
+  num_labels: 1
+  ignore_mismatched_sizes: true
+
+training:
+  epochs: 100
+  early_stopping: true
+  save_path: "b1_best_model.pt"
+  device: cuda:0
+  patience: 10
+  min_delta: 0.0

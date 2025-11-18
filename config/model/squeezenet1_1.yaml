@@ -6,7 +6,7 @@ params:
   num_classes: 10
 
 training:
-  epochs: 5
+  epochs: 100
   early_stopping: true
   save_path: "squeezenet1_1_best_model.pt"
   device: cuda:1

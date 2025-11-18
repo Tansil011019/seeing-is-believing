@@ -67,3 +67,30 @@ echo "Start Experiment"
 eval $CMD
 echo "Experiment Complete"
 echo "-----------------------------------"
+
+
+# --- 🚀 EMAIL NOTIFICATION ---
+# This path should point to your email python script
+PYTHON_EMAIL_SCRIPT="/data/marthen/send_email.py"
+PYTHON_EXE=$(which python3)
+
+# Check if the notification script exists
+if [ ! -f "$PYTHON_EMAIL_SCRIPT" ]; then
+    echo "Notification script $PYTHON_EMAIL_SCRIPT not found. Skipping email."
+    exit 0 # Exit script normally
+fi
+
+echo "Attempting to send email notification..."
+
+# Prepare the email content
+SUBJECT="✅ Wilson's Training Completed"
+BODY="Start the training for the next model ASAP!"
+
+# Call the python script. It will use the hardcoded credentials.
+"$PYTHON_EXE" "$PYTHON_EMAIL_SCRIPT" "$SUBJECT" "$BODY"
+
+if [ $? -eq 0 ]; then
+    echo "Email notification sent."
+else
+    echo "ERROR: Email notification failed to send. Check logs above."
+fi

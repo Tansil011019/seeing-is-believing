@@ -7,9 +7,9 @@ params:
   num_classes: 10
 
 training:
-  epochs: 1
+  epochs: 100
   early_stopping: true
-  save_path: "resnet50_best_model.pt"
+  save_path: "dpn92_best_model.pt"
   device: cuda:1
   patience: 10
   min_delta: 0.0

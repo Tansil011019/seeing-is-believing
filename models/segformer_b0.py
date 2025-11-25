@@ -16,6 +16,7 @@ class SegformerB0(nn.Module):
     def __init__(self):
         super(SegformerB0, self).__init__()
         
+        self.resizer = nn.Upsample(size=(512, 512), mode='bilinear', align_corners=False)
         # Load pretrained Segformer model
         self.model = SegformerForSemanticSegmentation.from_pretrained(
             "nvidia/segformer-b0-finetuned-ade-512-512",
@@ -35,6 +36,7 @@ class SegformerB0(nn.Module):
         Returns:
             Output logits (B, 1, H, W)
         """
+        x = self.resizer(x)
         outputs = self.model(pixel_values=x)
         logits = outputs.logits  # (B, 1, H/4, W/4)
         

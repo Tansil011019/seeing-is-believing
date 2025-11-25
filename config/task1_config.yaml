@@ -12,14 +12,18 @@ defaults:
 seed: 42
 
 paths:
-  # train_img_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1-2_Training_Input
-  # train_mask_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1_Training_GroundTruth
-  # val_img_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1-2_Validation_Input
-  # val_mask_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1_Validation_GroundTruth
-  # results_dir: ${hydra:runtime.cwd}/results/task1/
-
-  train_img_dir: ${hydra:runtime.cwd}/dummy_datasets/inputs
-  train_mask_dir: ${hydra:runtime.cwd}/dummy_datasets/gt
-  val_img_dir: ${hydra:runtime.cwd}/dummy_datasets/inputs
-  val_mask_dir: ${hydra:runtime.cwd}/dummy_datasets/gt
+  train_img_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1-2_Training_Input
+  train_mask_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1_Training_GroundTruth
+  val_img_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1-2_Validation_Input
+  val_mask_dir: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1_Validation_GroundTruth
+  train_preprocessed_img_dir: ${hydra:runtime.cwd}/datasets/preprocessed_data/task1/train/images
+  train_preprocessed_mask_dir: ${hydra:runtime.cwd}/datasets/preprocessed_data/task1/train/masks
+  val_preprocessed_img_dir: ${hydra:runtime.cwd}/datasets/preprocessed_data/task1/val/images
+  val_preprocessed_mask_dir: ${hydra:runtime.cwd}/datasets/preprocessed_data/task1/val/masks
   results_dir: ${hydra:runtime.cwd}/results/task1/
+
+  # train_img_dir: ${hydra:runtime.cwd}/dummy_datasets/inputs
+  # train_mask_dir: ${hydra:runtime.cwd}/dummy_datasets/gt
+  # val_img_dir: ${hydra:runtime.cwd}/dummy_datasets/inputs
+  # val_mask_dir: ${hydra:runtime.cwd}/dummy_datasets/gt
+  # results_dir: ${hydra:runtime.cwd}/results/task1/

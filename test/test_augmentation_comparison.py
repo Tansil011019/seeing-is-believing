@@ -17,7 +17,7 @@ from matplotlib.gridspec import GridSpec
 # Add parent directory to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
-from preprocessing.augmentation import rotate_image_and_mask, dilate_image_and_mask
+from preprocessing.segmentation_preprocessing.augmentation import rotate_image_and_mask, dilate_image_and_mask
 from preprocessing.image_io import load_image, load_mask
 
 

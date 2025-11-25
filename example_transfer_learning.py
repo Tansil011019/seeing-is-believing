@@ -10,7 +10,7 @@ from pathlib import Path
 # Add parent directory to path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from seg_transfer_learning_pipeline import TransferLearningPipeline
+from vanilla_scripts.seg_transfer_learning_pipeline import TransferLearningPipeline
 from utils import setup_logger
 
 

@@ -17,6 +17,7 @@ class SegformerB1(nn.Module):
     def __init__(self):
         super(SegformerB1, self).__init__()
         
+        self.resizer = nn.Upsample(size=(512, 512), mode='bilinear', align_corners=False)
         # Using Segformer B1 as MIT-B1 architecture
         self.model = SegformerForSemanticSegmentation.from_pretrained(
             "nvidia/segformer-b1-finetuned-ade-512-512",
@@ -35,6 +36,7 @@ class SegformerB1(nn.Module):
         Returns:
             Output logits (B, 1, H, W)
         """
+        x = self.resizer(x)
         outputs = self.model(pixel_values=x)
         logits = outputs.logits
         

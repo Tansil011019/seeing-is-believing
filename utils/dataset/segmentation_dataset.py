@@ -4,10 +4,18 @@ PyTorch Dataset for segmentation
 import os
 import cv2
 import numpy as np
+from pyparsing import Path
 import torch
 from torch.utils.data import Dataset
 from typing import Tuple
+from preprocessing.segmentation_preprocessing import (
+    preprocess_segmentation_dataset_parallel,
+    AUGMENTATION_FACTOR,
+    IMG_EXTENSIONS
+)
+import logging
 
+logger = logging.getLogger(__name__)
 
 class SegmentationDataset(Dataset):
     """PyTorch Dataset for loading segmentation data"""
@@ -16,7 +24,10 @@ class SegmentationDataset(Dataset):
         self,
         img_dir: str,
         mask_dir: str,
-        image_size: Tuple[int, int] = (1024, 1024),
+        preprocessed_img_dir: str,
+        preprocessed_mask_dir: str,
+        num_workers: int = 4,
+        image_size: Tuple[int, int] = (512, 512),
         normalize: bool = True
     ):
         """
@@ -32,10 +43,15 @@ class SegmentationDataset(Dataset):
         self.mask_dir = mask_dir
         self.image_size = image_size
         self.normalize = normalize
+        self.num_workers = num_workers
         
+        self.preprocessed_image_dir = preprocessed_img_dir
+        self.preprocessed_mask_dir = preprocessed_mask_dir
+        
+        self._preprocess()
         self.image_files = sorted([
-            f for f in os.listdir(img_dir)
-            if f.endswith('.png') or f.endswith('.jpg')
+            f for f in os.listdir(self.preprocessed_image_dir)
+            if any(f.lower().endswith(ext) for ext in IMG_EXTENSIONS)
         ])
     
     def __len__(self):
@@ -114,3 +130,58 @@ class SegmentationDataset(Dataset):
         mean = torch.tensor([0.485, 0.456, 0.406]).view(3, 1, 1)
         std = torch.tensor([0.229, 0.224, 0.225]).view(3, 1, 1)
         return (image - mean) / std
+    
+    def _preprocess(self):
+        """Check for existing preprocessed data and run preprocessing if needed"""
+        
+        if self._check_augmented_data_exists():
+            return
+        
+        preprocess_segmentation_dataset_parallel(
+            str(self.img_dir),
+            str(self.mask_dir),
+            str(self.preprocessed_image_dir),
+            str(self.preprocessed_mask_dir),
+            True,
+            self.num_workers,
+            output_size=(512, 512)
+        )
+        
+        
+    def _check_augmented_data_exists(self) -> bool:
+        """Check if augmented data exists with correct number of files"""
+        
+        aug_img_path = Path(self.preprocessed_image_dir)
+        aug_mask_path = Path(self.preprocessed_mask_dir)
+        img_path = Path(self.img_dir)
+        
+        if not aug_img_path.exists() or not aug_mask_path.exists():
+            logger.warning("Augmented data/mask folder not found.")
+            return False
+        
+        try:
+            orig_img_count = sum(1 for f in img_path.iterdir()
+                               if f.suffix.lower() in IMG_EXTENSIONS)
+        except FileNotFoundError:
+            logger.error(f"Original image folder not found: {img_path}")
+            return False
+        
+        if orig_img_count == 0:
+            logger.warning(f"No images found in {img_path}.")
+            return False
+        
+        aug_img_count = sum(1 for f in aug_img_path.iterdir()
+                           if f.suffix.lower() in IMG_EXTENSIONS)
+        aug_mask_count = sum(1 for f in aug_mask_path.iterdir()
+                            if f.suffix.lower() in IMG_EXTENSIONS)
+        
+        expected_count = orig_img_count * AUGMENTATION_FACTOR
+        
+        if aug_img_count >= expected_count and aug_mask_count >= expected_count:
+            logger.info(f"Found {aug_img_count} aug images and {aug_mask_count} aug masks.")
+            logger.info(f"(Expected >= {expected_count} based on {orig_img_count} originals)")
+            return True
+        
+        logger.info(f"Found {aug_img_count} aug images, {aug_mask_count} aug masks.")
+        logger.info(f"Expected {expected_count}. Preprocessing will run.")
+        return False

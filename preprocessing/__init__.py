@@ -1,17 +1,11 @@
 """
 Preprocessing modules for image augmentation and dataset handling
 """
-from .augmentation import (
+from .segmentation_preprocessing.augmentation import (
     rotate_image_and_mask,
     dilate_image_and_mask,
 )
 
-from .augmentation_pipeline import (
-    augment_image_and_mask,   
-)
-
-from .parallel_processor import process_dataset_parallel
-from utils.dataset.segmentation_dataset import SegmentationDataset
 from .attr_dataset import AttributeDataset
 
 from .attr_preprocessing import (
@@ -22,6 +16,8 @@ from .attr_preprocessing import (
     ATTR_TYPES,
     FEAT_THRESHOLD
 )
+
+from . import segmentation_preprocessing
 
 __all__ = [
     'rotate_image_and_mask',
@@ -35,5 +31,6 @@ __all__ = [
     'process_dataset_labels',
     'get_label_statistics',
     'ATTR_TYPES',
-    'FEAT_THRESHOLD'
+    'FEAT_THRESHOLD',
+    'segmentation_preprocessing',
 ]

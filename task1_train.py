@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 
 batch_scheduler = ["OneCycleLR"]
 
-@hydra.main(config_path="config", config_name="task1_config")
+@hydra.main(version_base="1.1",config_path="config", config_name="task1_config")
 def train_task1(cfg: DictConfig):
     logger.info("Configuration: ")
     logger.info(f"\t{OmegaConf.to_yaml(cfg)}") 

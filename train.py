@@ -7,14 +7,18 @@ from torch.utils.data import Subset
 import torch
 import os
 from datetime import datetime
+from dotenv import load_dotenv
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1, 2, 3"
+load_dotenv()
+
+os.environ["CUDA_VISIBLE_DEVICES"] = "6, 7"
 logger = logging.getLogger(__name__)
 
 batch_scheduler = ["OneCycleLR"]
 
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def train(cfg: DictConfig) -> None:
+    logger.info(f"Token loaded: {'HF_TOKEN' in os.environ}")
     logger.info("Configuration: ")
     logger.info(f"\t{OmegaConf.to_yaml(cfg)}") 
 

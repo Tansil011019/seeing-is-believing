@@ -5,6 +5,7 @@ params:
   pretrained_model_name_or_path: microsoft/resnet-34
   num_labels: 10
   ignore_mismatched_sizes: true
+  token: ${oc.env:HF_TOKEN}
 
 training:
   epochs: 100

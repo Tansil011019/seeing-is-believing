@@ -25,7 +25,8 @@ class Trainer:
         min_delta = 0,
         save_path = None,
         fold_index = None,
-        scheduler_step_at_epoch_end = True
+        scheduler_step_at_epoch_end = True,
+        **kwargs
     ):
         self.model = model
         self.model_name = model_name
@@ -47,7 +48,10 @@ class Trainer:
             self._patience_counter = 0
             self._best_val_loss = float('inf')
             self._best_model_state = None
-
+        
+        if kwargs:
+            logger.warning(f"Unused Trainer parameters: {kwargs.keys()}")
+            
     def _get_logits_from_outputs(self, outputs):
         raise NotImplementedError("This method should be implemented in subclasses.")
     

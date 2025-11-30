@@ -3,7 +3,7 @@ name: resnet-18
 params:
   _target_: transformers.ResNetForImageClassification.from_pretrained
   pretrained_model_name_or_path: microsoft/resnet-18
-  num_labels: 10
+  num_labels: 7
   ignore_mismatched_sizes: true
 
 training:
@@ -13,3 +13,5 @@ training:
   device: cuda:1
   patience: 10
   min_delta: 0.0
+  freeze_ratio: 0.0
+  class_count: false

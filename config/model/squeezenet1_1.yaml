@@ -3,7 +3,7 @@ name: squeezenet-1_1
 params:
   _target_: models.SqueezeNet_1_1_Custom
   weights: SqueezeNet1_1_Weights.IMAGENET1K_V1
-  num_classes: 10
+  num_classes: 7
 
 training:
   epochs: 100
@@ -12,3 +12,5 @@ training:
   device: cuda:1
   patience: 10
   min_delta: 0.0
+  freeze_ratio: 0.0
+  class_count: false

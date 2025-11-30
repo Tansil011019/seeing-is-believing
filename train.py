@@ -64,7 +64,12 @@ def train(cfg: DictConfig) -> None:
                 scheduler_step_at_epoch_end = False
             else:
                 scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
-
+        
+        freeze_ratio = cfg.model.training.get("freeze_ratio", 0.0)
+        print("Class count weighting:", cfg.model.training.get("class_count", False))
+        class_counts = None
+        if cfg.model.training.get("class_count"):
+            class_counts = df['label'].value_counts().sort_index().values.tolist()
         trainer = instantiate(
             cfg.training,
             model=model,
@@ -76,6 +81,8 @@ def train(cfg: DictConfig) -> None:
             device=device,
             epoch=cfg.model.training.epochs,
             scheduler=scheduler,
+            freeze_ratio=freeze_ratio,
+            class_count=class_counts if class_counts else None,
             early_stopping=cfg.model.training.early_stopping,
             patience=cfg.model.training.patience,
             min_delta=cfg.model.training.min_delta,

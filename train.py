@@ -11,7 +11,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "6, 7"
+os.environ["CUDA_VISIBLE_DEVICES"] = "5, 6, 7"
 logger = logging.getLogger(__name__)
 
 batch_scheduler = ["OneCycleLR"]

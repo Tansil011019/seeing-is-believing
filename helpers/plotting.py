@@ -85,5 +85,3 @@ def plot_metrics(history, model_name, save_path):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path)
     plt.show()
-
-    __all__ = ['plot_metrics']

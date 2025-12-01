@@ -30,7 +30,7 @@ usage() {
 }
 
 SHORT_OPTS="h"
-LONG_OPTS="train,help"
+LONG_OPTS="train,help,train-rgan"
 
 PARSED_OPTS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@")
 
@@ -44,6 +44,10 @@ while [[ -n "$1" ]]; do
     case "$1" in
         --train)
             ENTRYPOINT="train"
+            shift
+            ;;
+        --train-rgan)
+            ENTRYPOINT="train_rgan"
             shift
             ;;
         -h|--help)

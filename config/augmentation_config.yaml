@@ -7,8 +7,7 @@ defaults:
   - override hydra/job_logging: custom
 
 # ["MEL", "BCC", "AKIEC", "BKL", "DF", "VASC"]
-target_labels: ["VASC"]
-target_counts: 6700
+target_labels: ["MEL"]
 
 label_map:
   MEL: 0

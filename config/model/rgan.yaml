@@ -12,11 +12,11 @@ discriminator:
   img_size: 224
 
 training: 
-  epochs: 2
+  epochs: 10000
   beta: 0.5
-  device: cuda:0
-  checkpoint_interval: 1
-  resume_path: null
+  device: cuda:7
+  checkpoint_interval: 1000
+  resume_path: null 
   checkpoints_dir: "outputs/rgan/checkpoints/"
   z_dim: 100
   lambda_gp: 10.0

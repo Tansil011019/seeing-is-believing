@@ -1,0 +1,15 @@
+name: vit_tiny_attr
+
+params:
+  _target_: models.attr_factory.get_attr_model
+  model_name: vit_tiny
+  num_classes: 5
+  pretrained: true
+
+training:
+  epochs: 50
+  early_stopping: true
+  save_path: "vit_tiny_attr_best_model.pt"
+  device: cuda:0
+  patience: 10
+  min_delta: 0.0

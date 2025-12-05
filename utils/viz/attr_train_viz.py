@@ -40,9 +40,6 @@ def visualize_attribute_training(csv_path):
     train_color = '#2E86AB'  # Blue
     val_color = '#A23B72'    # Purple
     
-    # Check if we have train F1 macro (might not exist in CSV)
-    has_train_f1 = 'train_f1_macro' in df.columns
-    
     # Plot 1: Train Loss
     ax = axes[0, 0]
     ax.plot(df['epoch'], df['train_loss'], color=train_color, linewidth=2, marker='o', markersize=3)
@@ -77,27 +74,22 @@ def visualize_attribute_training(csv_path):
             ha='right', va='top', fontsize=9, color='green',
             bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.7, edgecolor='green'))
     
-    # Plot 3: Train F1-Macro
+    # Plot 3: Val F1-Micro
     ax = axes[1, 0]
-    if has_train_f1:
-        ax.plot(df['epoch'], df['train_f1_macro'], color=train_color, linewidth=2, marker='o', markersize=3)
-        ax.set_ylabel('F1-Macro', fontsize=11)
-        ax.set_ylim(bottom=0, top=1)
-        
-        # Add max value annotation
-        max_f1 = df['train_f1_macro'].max()
-        max_epoch = df.loc[df['train_f1_macro'].idxmax(), 'epoch']
-        ax.axhline(y=max_f1, color='green', linestyle=':', alpha=0.5, linewidth=1.5)
-        ax.text(0.98, max_f1, f'Max: {max_f1:.4f}\n(Epoch {int(max_epoch)})', 
-                ha='right', va='bottom', fontsize=9, color='green',
-                bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.7, edgecolor='green'))
-    else:
-        ax.text(0.5, 0.5, 'Train F1-Macro\nNot Available', 
-                ha='center', va='center', fontsize=12, color='gray',
-                transform=ax.transAxes)
-        ax.set_yticks([])
+
+    ax.plot(df['epoch'], df['val_f1_micro'], color=train_color, linewidth=2, marker='o', markersize=3)
+    ax.set_ylabel('F1-Micro', fontsize=11)
+    ax.set_ylim(bottom=0, top=1)
+    
+    # Add max value annotation
+    max_f1 = df['val_f1_micro'].max()
+    max_epoch = df.loc[df['val_f1_micro'].idxmax(), 'epoch']
+    ax.axhline(y=max_f1, color='green', linestyle=':', alpha=0.5, linewidth=1.5)
+    ax.text(0.98, max_f1, f'Max: {max_f1:.4f}\n(Epoch {int(max_epoch)})', 
+            ha='right', va='bottom', fontsize=9, color='green',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.7, edgecolor='green'))
     ax.set_xlabel('Epoch', fontsize=11)
-    ax.set_title('Training F1-Macro', fontsize=12, fontweight='bold')
+    ax.set_title('Validation F1-Micro', fontsize=12, fontweight='bold')
     ax.grid(True, alpha=0.3, linestyle='--')
     ax.set_xlim(left=1)
     
@@ -138,13 +130,6 @@ def visualize_attribute_training(csv_path):
     print(f"Best Train Loss:        {min_loss:.6f} (Epoch {int(min_epoch)})")
     print(f"Final Val Loss:         {df['val_loss'].iloc[-1]:.6f}")
     print(f"Best Val Loss:          {min_val_loss:.6f} (Epoch {int(min_val_epoch)})")
-    
-    if has_train_f1:
-        print(f"Final Train F1-Macro:   {df['train_f1_macro'].iloc[-1]:.6f}")
-        print(f"Best Train F1-Macro:    {max_f1:.6f} (Epoch {int(max_epoch)})")
-    else:
-        print(f"Train F1-Macro:         Not Available")
-    
     print(f"Final Val F1-Macro:     {df['val_f1_macro'].iloc[-1]:.6f}")
     print(f"Best Val F1-Macro:      {max_val_f1:.6f} (Epoch {int(max_val_epoch)})")
     

@@ -1,0 +1,19 @@
+defaults:
+  - model: resnet18_attr
+  - optimizer: adam_w
+  - loss: bce_with_logits
+  - dataset: attr_data
+  - dataloader: attr_data
+  - scheduler: reduce_lr_on_plateau
+  - training: attribute_trainer
+  # - _self_
+  # - override hydra/job_logging: custom
+
+seed: 42
+
+paths:
+  image_folder: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1-2_Training_Input
+  train_csv: ${hydra:runtime.cwd}/datasets/ISIC2018_Task2_Training_GroundTruth.csv
+  val_image_folder: ${hydra:runtime.cwd}/datasets/ISIC2018_Task1-2_Validation_Input
+  val_csv: ${hydra:runtime.cwd}/datasets/ISIC2018_Task2_Validation_GroundTruth.csv
+  results_dir: ${hydra:runtime.cwd}/results/task2/

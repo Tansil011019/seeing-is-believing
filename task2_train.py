@@ -1,6 +1,6 @@
 """
-Unified training entrypoint for ISIC2018 segmentation and attribute detection
-Supports Task 1 (segmentation) and Task 2 (attribute detection) using Hydra
+Training entrypoint for ISIC2018 Task 2: Attribute Detection
+Supports multi-label classification for skin lesion attributes using Hydra
 """
 import os
 import hydra
@@ -20,8 +20,8 @@ logger = logging.getLogger(__name__)
 
 batch_scheduler = ["OneCycleLR"]
 
-@hydra.main(config_path="config", config_name="task1_config")
-def train_task1(cfg: DictConfig):
+@hydra.main(version_base="1.1", config_path="config", config_name="task2_config")
+def train_task2(cfg: DictConfig):
     logger.info("Configuration: ")
     logger.info(f"\t{OmegaConf.to_yaml(cfg)}") 
 
@@ -50,7 +50,7 @@ def train_task1(cfg: DictConfig):
                 cfg.scheduler, 
                 optimizer=optimizer, 
                 steps_per_epoch=len(train_loader),
-                epochs=cfg.model.traning.epochs
+                epochs=cfg.model.training.epochs
             )
             scheduler_step_at_epoch_end = False
         else:
@@ -83,9 +83,9 @@ def train_task1(cfg: DictConfig):
     with open(f"{cfg.paths.results_dir}/{cfg.model.name}/{datastamp}/history_{cfg.model.name}.csv", 'w') as f:
         pd.DataFrame(history).to_csv(f, index=False)
     
-    logger.info("Task 1 Training Completed.")
+    logger.info("Task 2 Training Completed.")
     
     
 
 if __name__ == "__main__":
-    train_task1()
+    train_task2()

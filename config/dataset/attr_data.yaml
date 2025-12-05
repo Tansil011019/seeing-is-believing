@@ -1,0 +1,13 @@
+train_dataset:
+  _target_: preprocessing.attr_dataset.AttributeDataset
+  image_folder: ${paths.image_folder}
+  csv_file: ${paths.train_csv}
+  image_size: [224, 224]
+  normalize: true
+
+val_dataset:
+  _target_: preprocessing.attr_dataset.AttributeDataset
+  image_folder: ${paths.val_image_folder}
+  csv_file: ${paths.val_csv}
+  image_size: [224, 224]
+  normalize: true

@@ -39,7 +39,7 @@ class ParquetImageDataset(Dataset):
         logger.info(f"Loading parquet file from {parquet_path}")
         image_data_df = pd.read_parquet(parquet_path)
 
-        image_data_df['filename'] = image_data_df['filename'].str.replace('.jpg', '', regex=False)
+        image_data_df['filename'] = image_data_df['filename'].str.replace(r'\.(jpg|png)$', '', regex=True)
 
         self.df = pd.merge(
             meta_df,

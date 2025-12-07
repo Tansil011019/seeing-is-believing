@@ -1,6 +1,7 @@
 defaults:
   - model: rgan
   - _self_
+  - override hydra/job_logging: custom
 
 device: cuda:6
 batch_size: 64

@@ -58,6 +58,8 @@ class ParquetImageDataset(Dataset):
         label_str = row['label']
         label_int = self.label_map[label_str]
 
+        images = row['image']
+
         raw_bytes = row['image_bytes']
         image = Image.open(io.BytesIO(raw_bytes)).convert("RGB")
         if image is None:
@@ -66,7 +68,7 @@ class ParquetImageDataset(Dataset):
         if self.transform:
             image = self.transform(image)
 
-        return image, label_int
+        return image, label_int, images
     
     def __len__(self):
         return len(self.df)

@@ -120,7 +120,7 @@ class RGANTrainer:
         for epoch in range(start_epoch, self.epoch):
             progress_bar = tqdm(enumerate(self.dataloader), total=len(self.dataloader), desc="Epoch {}/{}".format(epoch+1, self.epoch))
 
-            for i, (imgs, _) in progress_bar:
+            for i, (imgs, _, _) in progress_bar:
                 imgs = imgs.to(self.device)
                 batch_size = imgs.shape[0]
 

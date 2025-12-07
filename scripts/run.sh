@@ -30,7 +30,7 @@ usage() {
 }
 
 SHORT_OPTS="h"
-LONG_OPTS="train,help,train-rgan,generate-rgan"
+LONG_OPTS="train,help,train-rgan,generate-rgan,generate-oof,train-dual-phase"
 
 PARSED_OPTS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@")
 
@@ -52,6 +52,14 @@ while [[ -n "$1" ]]; do
             ;;
         --generate-rgan)
             ENTRYPOINT="generate_rgan"
+            shift
+            ;;
+        --generate-oof)
+            ENTRYPOINT="generate_oof"
+            shift
+            ;;
+        --train-dual-phase)
+            ENTRYPOINT="train_dual_phase"
             shift
             ;;
         -h|--help)

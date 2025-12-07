@@ -5,7 +5,7 @@ defaults:
 device: cuda:6
 batch_size: 64
 
-target_labels: ["BKL", "BCC", "AKIEC"]
+target_labels: ["MEL"]
 
 save_path: /raid/home/llmsosmed/my_folder/data
 
@@ -27,3 +27,4 @@ tasks:
     path: "results/r-gan/BCC/20251202-063146/rgan_final_model_20251203-012136.pth"
   MEL:
     target_counts: 5592
+    path: "results/r-gan/MEL/20251202-063543/rgan_final_model_20251204-134215.pth"

@@ -85,6 +85,7 @@ def train(cfg: DictConfig) -> None:
                 scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
         
         freeze_ratio = cfg.model.training.get("freeze_ratio", 0.0)
+        freeze_ratio_phase2 = cfg.model.training.get("freeze_ratio_phase2", 0.0)
         print("Class count weighting:", cfg.model.training.get("class_count", False))
         class_counts = None
         if cfg.model.training.get("class_count"):
@@ -147,7 +148,7 @@ def train(cfg: DictConfig) -> None:
             device=device,
             epoch=cfg.model.training.epochs,
             scheduler=scheduler_phase_2,
-            freeze_ratio=0.0, 
+            freeze_ratio=freeze_ratio_phase2, 
             class_count=class_counts if class_counts else None,
             early_stopping=cfg.model.training.early_stopping,
             patience=cfg.model.training.patience,

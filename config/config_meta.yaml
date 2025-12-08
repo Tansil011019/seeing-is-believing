@@ -1,0 +1,16 @@
+defaults:
+  - model: xgboost
+  - training: fit_trainer
+  - _self_
+  - override hydra/job_logging: custom
+
+ignore_columns: ['target', 'image']
+target_column: 'target'
+seed: 42
+test_size: 0.2
+
+use_prior_adjustment: true
+
+paths: 
+  results_dir: results/
+  csv_file: /raid/home/llmsosmed/my_folder/merged_data.csv

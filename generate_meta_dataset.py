@@ -3,6 +3,7 @@ from omegaconf import DictConfig, OmegaConf
 import logging
 import pandas as pd
 import os
+from datetime import datetime
 
 logger = logging.getLogger(__name__)
 
@@ -11,6 +12,7 @@ def main(cfg: DictConfig):
     logger.info("Configuration: ")
     logger.info(f"\t{OmegaConf.to_yaml(cfg)}") 
 
+    time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     meta_cols = ['image', 'target']
     master = False
     df_master = None
@@ -33,8 +35,8 @@ def main(cfg: DictConfig):
 
     output_folder = cfg.get('output_meta_dataset_folder', '.')
     os.makedirs(output_folder, exist_ok=True)
-    output_file_csv = os.path.join(output_folder, 'meta_dataset.csv')
-    output_file_parquet = os.path.join(output_folder, 'meta_dataset.parquet')
+    output_file_csv = os.path.join(output_folder, f'{time_stamp}_meta_dataset.csv')
+    output_file_parquet = os.path.join(output_folder, f'{time_stamp}_meta_dataset.parquet')
     df_meta.to_csv(output_file_csv, index=False)
     df_meta.to_parquet(output_file_parquet, index=False)
     logger.info(f"Meta-dataset saved to {output_file_csv} and {output_file_parquet}")

@@ -1,0 +1,23 @@
+defaults:
+  - _self_
+  - override hydra/job_logging: custom
+
+files:
+  resnet18: /raid/home/llmsosmed/my_folder/meta-features/resnet-18/oof_predictions_20251207-132731_balanced.csv
+  resnet34_1: /raid/home/llmsosmed/my_folder/meta-features/resnet-34/oof_predictions_20251207-122328.csv
+  resnet34_2: /raid/home/llmsosmed/my_folder/meta-features/resnet-34/oof_predictions_20251207-152838.csv
+  resnet50_1: /raid/home/llmsosmed/my_folder/meta-features/resnet-50/oof_predictions_20251207-153012.csv
+  resnet50_2: /raid/home/llmsosmed/my_folder/meta-features/resnet-50/oof_predictions_20251207-153123.csv
+  resnet152: /raid/home/llmsosmed/my_folder/meta-features/resnet-152/oof_predictions_20251207-123120.csv
+  densenet161: /raid/home/llmsosmed/my_folder/meta-features/densenet-161/oof_predictions_20251207-123635.csv
+  dpn92_1: /raid/home/llmsosmed/my_folder/meta-features/dpn-92/oof_predictions_20251207-124003.csv
+  dpn92_2: /raid/home/llmsosmed/my_folder/meta-features/dpn-92/oof_predictions_20251207-171432.csv
+  inceptionv3: /raid/home/llmsosmed/my_folder/meta-features/inception-v3/oof_predictions_20251207-125424.csv
+  inceptionv3_froze_first_half: /raid/home/llmsosmed/my_folder/meta-features/inception-v3/oof_predictions_20251207-125700_froze-first-half.csv
+  seresnet50: /raid/home/llmsosmed/my_folder/meta-features/seresnet-50/oof_predictions_20251207-124404.csv
+  seresnext50: /raid/home/llmsosmed/my_folder/meta-features/seresnext-50/oof_predictions_20251207-124756.csv
+  seresnext50_weight_loss_1: /raid/home/llmsosmed/my_folder/meta-features/seresnext-50/oof_predictions_20251207-124938-weight_loss.csv
+  seresnext50_weight_loss_2: /raid/home/llmsosmed/my_folder/meta-features/seresnext-50/oof_predictions_20251207-125131-weight_loss.csv
+  squeezenet1_1: /raid/home/llmsosmed/my_folder/meta-features/squeezenet-1_1/oof_predictions_20251207-130006.csv
+
+output_meta_dataset_folder: /raid/home/llmsosmed/my_folder/meta-features/

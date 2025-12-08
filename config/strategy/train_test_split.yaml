@@ -1,0 +1,4 @@
+_target_: utils.splitter.SimpleSplitter
+test_size: 0.2
+random_state: ${seed}
+stratify: true

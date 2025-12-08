@@ -16,7 +16,7 @@ def main(cfg: DictConfig):
     logger.info("Configuration: ")
     logger.info(f"\t{OmegaConf.to_yaml(cfg)}") 
 
-    input_path = to_absolute_path(cfg.data.input_path)
+    input_path = to_absolute_path(cfg.paths.input_path)
     if input_path.endswith('.csv'):
         df = pd.read_csv(input_path)
         logger.info(f"Loaded data from {input_path} with shape {df.shape}")
@@ -38,11 +38,10 @@ def main(cfg: DictConfig):
     )
 
     trainer = instantiate(
-        cfg.trainer,
+        cfg.training,
         model=model,
-        use_eval_set=cfg.use_eval_set,
-        early_stopping_rounds=cfg.early_stopping_rounds,
-        verbose=cfg.verbose
+        use_eval_set=cfg.model.training.use_eval_set,
+        verbose=cfg.model.training.verbose
     )
 
     trainer.fit(

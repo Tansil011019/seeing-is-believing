@@ -10,8 +10,9 @@ training:
   epochs: 100
   early_stopping: true
   save_path: "resnet18_best_model.pt"
-  device: cuda:1
+  device: cuda:7
   patience: 10
   min_delta: 0.0
   freeze_ratio: 0.0
+  freeze_ratio_phase2: 0.9
   class_count: false

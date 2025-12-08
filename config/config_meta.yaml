@@ -13,4 +13,4 @@ use_prior_adjustment: true
 
 paths: 
   results_dir: results/
-  csv_file: /raid/home/llmsosmed/my_folder/merged_data.csv
+  input_path: /raid/home/llmsosmed/my_folder/meta-features/meta_dataset_train.parquet

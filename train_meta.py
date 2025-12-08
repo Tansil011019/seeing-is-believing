@@ -3,7 +3,6 @@ from omegaconf import DictConfig, OmegaConf
 from hydra.utils import instantiate, to_absolute_path
 import logging
 import pandas as pd
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score
 from helpers import prior_adjustment
 import os
@@ -27,15 +26,12 @@ def main(cfg: DictConfig):
     model = instantiate(cfg.model.params)
     ignore_columns = cfg.ignore_columns
     feature_columns = [c for c in df.columns if c not in ignore_columns]
-    
+
+    logger.info(f"Using {len(feature_columns)} features for training.")
     time_stamp = datetime.now().strftime("%Y%m%d_%H%M%S")
 
-    X = df[feature_columns]
-    y = df[cfg.target_column]
-
-    X_train, X_val, y_train, y_val = train_test_split(
-        X, y, test_size=cfg.test_size, random_state=cfg.seed, stratify=y
-    )
+    splitter = instantiate(cfg.strategy)
+    X_train, X_val, y_train, y_val = splitter.split(df, feature_columns, cfg.target_column)
 
     trainer = instantiate(
         cfg.training,

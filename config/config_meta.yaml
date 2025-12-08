@@ -1,6 +1,7 @@
 defaults:
   - model: xgboost
   - training: fit_trainer
+  - strategy: group_shuffle_split
   - _self_
   - override hydra/job_logging: custom
 
@@ -13,4 +14,4 @@ use_prior_adjustment: true
 
 paths: 
   results_dir: results/
-  input_path: /raid/home/llmsosmed/my_folder/meta-features/meta_dataset_train.parquet
+  input_path: /raid/home/llmsosmed/my_folder/meta-features/20251208_175315_meta_dataset.parquet

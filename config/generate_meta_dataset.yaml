@@ -19,5 +19,6 @@ files:
   seresnext50_weight_loss_1: /raid/home/llmsosmed/my_folder/meta-features/seresnext-50/oof_predictions_20251207-124938-weight_loss.csv
   seresnext50_weight_loss_2: /raid/home/llmsosmed/my_folder/meta-features/seresnext-50/oof_predictions_20251207-125131-weight_loss.csv
   squeezenet1_1: /raid/home/llmsosmed/my_folder/meta-features/squeezenet-1_1/oof_predictions_20251207-130006.csv
+  resnet_rgan_dual: /raid/home/llmsosmed/my_folder/meta-features/resnet-18/oof_predictions_20251208-174747_balanced_dual.csv
 
 output_meta_dataset_folder: /raid/home/llmsosmed/my_folder/meta-features/

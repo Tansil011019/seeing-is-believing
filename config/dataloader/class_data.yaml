@@ -9,3 +9,9 @@ val_loader:
   batch_size: 64
   shuffle: false
   num_workers: 4
+
+test_loader:
+  _target_: torch.utils.data.DataLoader
+  batch_size: 64
+  shuffle: false
+  num_workers: 4

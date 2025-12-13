@@ -13,7 +13,7 @@ params:
   random_state: ${seed}
   device: cuda:7
   early_stopping_rounds: 50
-
+  
 training:
   verbose: true
   use_eval_set: true

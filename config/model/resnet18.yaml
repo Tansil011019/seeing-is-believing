@@ -14,5 +14,5 @@ training:
   patience: 10
   min_delta: 0.0
   freeze_ratio: 0.0
-  freeze_ratio_phase2: 0.9
+  freeze_ratio_phase2: 0.5
   class_count: false

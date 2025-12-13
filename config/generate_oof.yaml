@@ -1,16 +1,16 @@
 defaults:
-  - model: dpn92
+  - model: resnet18
   - strategy: kfold_cross_validation
   - dataset: parquet_class_data
   - dataloader: class_data
-  - validation: timm_validator
+  - validation: transformer_validator
   - loss: cross_entropy
   - _self_
   - override hydra/job_logging: custom
 
-device: cuda:6
+device: cuda:7
 
-model_folder: /raid/home/llmsosmed/my_folder/seeing-is-believing/results/dpn-92/20251207-124522
+model_folder: /raid/home/llmsosmed/my_folder/seeing-is-believing/results/dual_phase/resnet-18/phase_2/20251207-171013
 
 save_path: /raid/home/llmsosmed/my_folder/meta-features
 

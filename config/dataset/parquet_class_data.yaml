@@ -43,3 +43,21 @@ val_dataset:
       - _target_: torchvision.transforms.Normalize
         mean: [0.7635, 0.5461, 0.5705]
         std: [0.1412, 0.1529, 0.1703]
+
+test_dataset:
+  _target_: utils.dataset.ParquetImageDataset
+  meta_df: 
+    _target_: pandas.read_csv
+    filepath_or_buffer: ${paths.csv_file}
+  parquet_path: ${paths.data_dir}
+  transform:
+    _target_: torchvision.transforms.Compose
+    transforms:
+      - _target_: torchvision.transforms.ToTensor
+      - _target_: utils.transforms.ShadesOfGrayTransform
+        p: 6
+      - _target_: torchvision.transforms.Resize
+        size: [224, 224]
+      - _target_: torchvision.transforms.Normalize
+        mean: [0.7606, 0.5559, 0.5798]
+        std: [0.1461, 0.1605, 0.1780]

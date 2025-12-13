@@ -30,7 +30,7 @@ usage() {
 }
 
 SHORT_OPTS="h"
-LONG_OPTS="train,help,train-rgan,generate-rgan,generate-oof,train-dual-phase,generate-meta-dataset,train-meta"
+LONG_OPTS="train,help,train-rgan,generate-rgan,generate-oof,train-dual-phase,generate-meta-dataset,train-meta,ensemble"
 
 PARSED_OPTS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@")
 
@@ -68,6 +68,10 @@ while [[ -n "$1" ]]; do
             ;;
         --train-meta)
             ENTRYPOINT="train_meta"
+            shift
+            ;;
+        --ensemble)
+            ENTRYPOINT="ensemble"
             shift
             ;;
         -h|--help)

@@ -1,5 +1,5 @@
 defaults:
-  - model: resnet34
+  - model: resnet18
   - strategy: kfold_cross_validation
   - optimizer: adam
   - loss: cross_entropy
@@ -12,6 +12,6 @@ defaults:
 
 seed: 42
 paths: 
-  data_dir: /raid/home/llmsosmed/my_folder/images.parquet
-  results_dir: results/
-  csv_file: notebooks/ISIC2018_Task3_Training_Input/cleaned_data.csv
+  data_dir: /raid/home/llmsosmed/my_folder/merged_images.parquet
+  results_dir: results/dual_phase/
+  csv_file: /raid/home/llmsosmed/my_folder/merged_data.csv

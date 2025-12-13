@@ -1,0 +1,80 @@
+defaults:
+  - model@meta_model: xgboost
+  - model/densenet161@model_defs.densenet161
+  - model/dpn92@model_defs.dpn92
+  - model/resnet18@model_defs.resnet18
+  - model/resnet34@model_defs.resnet34
+  - model/resnet50@model_defs.resnet50
+  - model/resnet152@model_defs.resnet152
+  - model/seresnet50@model_defs.seresnet50
+  - model/seresnext50@model_defs.seresnext50
+  - model/squeezenet1_1@model_defs.squeezenet1_1
+  - model/inceptionv3@model_defs.inceptionv3
+  - ensemble: stacking
+  - dataset: parquet_class_data
+  - dataloader: class_data
+  - _self_
+  - override hydra/job_logging: custom
+
+device: cuda:0
+
+ensemble:
+  _target_: models.StackingEnsemble
+  meta_model_path: "results/xgboost/20251208_175443/xgboost_20251208_175443_dual.pkl"
+  base_model_paths:
+    densenet161: 
+      - results/densenet-161/20251201-153552
+    dpn92:
+      - results/dpn-92/20251201-152540
+      - results/dpn-92/20251207-124522
+    resnet18:
+      - results/resnet-18/20251201-154409
+    resnet18_rgan_dual:
+      - results/dual_phase/resnet-18/phase_2/20251207-171013
+    inceptionv3:
+      - results/inception-v3/20251201-153745
+    inceptionv3_froze_first_half:
+      - results/inception-v3/20251130-065933
+    resnet34:
+      - results/resnet-34/20251130-070523
+      - results/resnet-34/20251207-122246
+    resnet50:
+      - results/resnet-50/20251207-123328
+      - results/resnet-50/20251207-123429
+    resnet152:
+      - results/resnet-152/20251201-154647
+    seresnet50:
+      - results/seresnet-50/20251201-153021
+    seresnext50:
+      - results/seresnext-50/20251201-152831
+    seresnext50_weight_loss:
+      - results/seresnext-50/20251130-065553
+      - results/seresnext-50/20251201-152325
+    squeezenet1_1:
+      - results/squeezenet-1_1/20251201-153940
+  model_order:
+    - resnet18
+    - resnet34_1
+    - resnet34_2
+    - resnet50_1
+    - resnet50_2
+    - resnet152
+    - densenet161
+    - dpn92_1
+    - dpn92_2
+    - inceptionv3
+    - inceptionv3_froze_first_half
+    - seresnet50
+    - seresnext50
+    - seresnext50_weight_loss_1
+    - seresnext50_weight_loss_2
+    - squeezenet1_1
+    - resnet18_rgan_dual
+seed: 42
+
+use_prior_adjustment: false
+
+paths: 
+  data_dir: /raid/home/llmsosmed/my_folder/test_images.parquet
+  results_dir: results/ensemble
+  csv_file: /raid/home/llmsosmed/my_folder/seeing-is-believing/notebooks/Task3/test_analysis.csv

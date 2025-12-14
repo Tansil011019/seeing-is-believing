@@ -24,11 +24,12 @@ class SegmentationDataset(Dataset):
         self,
         img_dir: str,
         mask_dir: str,
-        preprocessed_img_dir: str,
-        preprocessed_mask_dir: str,
+        preprocessed_img_dir: str = "",
+        preprocessed_mask_dir: str = "",
         num_workers: int = 4,
-        image_size: Tuple[int, int] = (512, 512),
-        normalize: bool = True
+        target_image_size: Tuple[int, int] = (512, 512),
+        normalize: bool = True,
+        do_preprocess: bool = True
     ):
         """
         Initialize dataset
@@ -41,14 +42,21 @@ class SegmentationDataset(Dataset):
         """
         self.img_dir = img_dir
         self.mask_dir = mask_dir
-        self.image_size = image_size
+        self.target_image_size = target_image_size
         self.normalize = normalize
         self.num_workers = num_workers
         
         self.preprocessed_image_dir = preprocessed_img_dir
         self.preprocessed_mask_dir = preprocessed_mask_dir
         
-        self._preprocess()
+        # If preprocessing is requested, run it
+        if do_preprocess:
+            self._preprocess()
+        # If no preprocessed dirs provided, use original dirs
+        else :
+            self.preprocessed_image_dir = img_dir
+            self.preprocessed_mask_dir = mask_dir
+            
         self.image_files = sorted([
             f for f in os.listdir(self.preprocessed_image_dir)
             if any(f.lower().endswith(ext) for ext in IMG_EXTENSIONS)
@@ -87,7 +95,7 @@ class SegmentationDataset(Dataset):
         """Load and resize image"""
         image = cv2.imread(image_path)
         image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-        return cv2.resize(image, self.image_size)
+        return cv2.resize(image, self.target_image_size, interpolation=cv2.INTER_AREA)
     
     def _find_mask_path(self, image_id: str) -> str:
         """Find mask path for given image ID"""
@@ -112,12 +120,12 @@ class SegmentationDataset(Dataset):
         if mask_path and os.path.exists(mask_path):
             mask = cv2.imread(mask_path, cv2.IMREAD_GRAYSCALE)
             mask = cv2.resize(
-                mask, self.image_size,
+                mask, self.target_image_size,
                 interpolation=cv2.INTER_NEAREST
             )
             _, mask = cv2.threshold(mask, 127, 1, cv2.THRESH_BINARY)
         else:
-            mask = np.zeros(self.image_size, dtype=np.uint8)
+            mask = np.zeros(self.target_image_size, dtype=np.uint8)
         return mask
     
     def _to_tensor(self, image: np.ndarray) -> torch.Tensor:

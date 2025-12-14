@@ -1,38 +1,5 @@
-"""
-Transfer Learning Pipeline for Segmentation
-Leverages pretrained HuggingFace models for skin lesion segmentation
-
-This pipeline provides transfer learning capabilities using state-of-the-art
-pretrained models from HuggingFace. It supports multiple architectures optimized
-for different use cases:
-
-Available Models:
-    - segformer: NVIDIA's Segformer-B0 pretrained on ADE20K (efficient, fast)
-    - mit_b1: Mix Transformer B1 variant (balanced performance)
-    - beit: Microsoft BEiT pretrained on ADE20K (high accuracy)
-    - medsam2: Medical SAM2 for medical image segmentation
-    - adaptive_segformer: Segformer with additional adaptation layers
-    - adaptive_beit: BEiT with additional adaptation layers
-
-Training Strategies:
-    - Full fine-tuning: Better performance, requires more data and compute
-    - Discriminative learning rates: Different LR for encoder/decoder when not frozen
-    - Mixed precision training: Faster training with AMP (enabled by default)
-
-Installation:
-    pip install transformers>=4.30.0
-
-Usage Examples:
-    # Quick start with frozen encoder (recommended for first try)
-    python seg_transfer_learning_pipeline.py --model segformer
-    
-    # Full fine-tuning for maximum performance
-    python seg_transfer_learning_pipeline.py --model beit --num_epochs 100
-    
-    # Train all models with metrics tracking
-    python seg_transfer_learning_pipeline.py --model all --track_metrics
-"""
 import os
+import sys
 import argparse
 import torch
 import torch.nn as nn
@@ -44,12 +11,17 @@ from typing import Optional, Dict, Any
 import csv
 from datetime import datetime
 
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
 # Project imports
-from preprocessing import process_dataset_parallel, SegmentationDataset
+from preprocessing.segmentation_preprocessing import preprocess_segmentation_dataset_parallel
 from models.seg_models import (
-    get_transfer_model, 
-    get_available_transfer_models
+    get_model, 
+    get_available_models
 )
+from utils.dataset import SegmentationDataset
+
 from evaluation import CombinedLoss, evaluate_model
 from utils import setup_logger, get_num_workers
 
@@ -59,7 +31,7 @@ IMG_EXTENSIONS = {'.png', '.jpg', '.jpeg'}
 os.environ["CUDA_VISIBLE_DEVICES"] = "0,1,2,3"
 
 
-class TransferLearningPipeline:
+class SegmentationTrainingPipeline:
     """
     Transfer learning pipeline for segmentation using pretrained models
     Supports multiple backbone architectures from HuggingFace
@@ -101,10 +73,7 @@ class TransferLearningPipeline:
             self._init_metrics_file()
         
         # Mixed precision training for efficiency
-        self.use_amp = cfg.get('use_amp', True) and (self.device.type == 'cuda')
-        self.scaler = torch.cuda.amp.GradScaler(enabled=self.use_amp)
-        if self.use_amp:
-            self.logger.info("Using Automatic Mixed Precision (AMP) training")
+        self.scaler = torch.amp.GradScaler(enabled=True)
     
     def _init_metrics_file(self):
         """Initialize CSV file for tracking metrics"""
@@ -137,31 +106,10 @@ class TransferLearningPipeline:
                 f"{lr:.8f}"
             ])
     
-    def preprocess(self, img_f: Path, mask_f: Path):
-        """Check for existing augmented data and run preprocessing if needed"""
-        self.logger.info("Starting data preprocessing...")
-        
-        if self._check_augmented_data_exists(img_f):
-            self.logger.info("Sufficient augmented data found. Skipping preprocessing.")
-            return
-        
-        self.logger.info("No/incomplete augmented data found. Starting parallel processing...")
-        process_dataset_parallel(
-            str(img_f),
-            str(mask_f),
-            str(self.cfg['aug_img']),
-            str(self.cfg['aug_mask']),
-            True,
-            self.num_workers,
-            self.logger,
-            output_size=(512, 512)
-        )
-        self.logger.info("Data preprocessing completed.\n")
-    
-    def _check_augmented_data_exists(self, img_f: Path) -> bool:
+    def check_augmented_data_exists(self, img_f: Path) -> bool:
         """Check if augmented data exists with correct number of files"""
-        aug_img_folder: Path = self.cfg['aug_img']
-        aug_mask_folder: Path = self.cfg['aug_mask']
+        aug_img_folder: Path = self.cfg['aug_image_folder']
+        aug_mask_folder: Path = self.cfg['aug_mask_folder']
         
         if not aug_img_folder.exists() or not aug_mask_folder.exists():
             self.logger.warning("Augmented data/mask folder not found.")
@@ -194,15 +142,17 @@ class TransferLearningPipeline:
         self.logger.info(f"Expected {expected_count}. Preprocessing will run.")
         return False
     
-    def prepare_data(self):
+    def prepare_data(self, do_preprocess: bool = False):
         """Create train and validation DataLoaders from separate datasets"""
         self.logger.info("Preparing data loaders...")
         
         # Training dataset (augmented)
         train_ds = SegmentationDataset(
-            str(self.cfg['aug_img']),
-            str(self.cfg['aug_mask']),
-            (256, 256)
+            str(self.cfg['image_folder']),
+            str(self.cfg['mask_folder']),
+            str(self.cfg['aug_image_folder']),
+            str(self.cfg['aug_mask_folder']),
+            do_preprocess=do_preprocess
         )
         
         if len(train_ds) == 0:
@@ -211,11 +161,11 @@ class TransferLearningPipeline:
         
         self.logger.info(f"Training dataset size: {len(train_ds)}")
         
-        # Validation dataset (separate validation set)
+        # Validation dataset (separate, not augmented)
         val_ds = SegmentationDataset(
             str(self.cfg['val_image_folder']),
             str(self.cfg['val_mask_folder']),
-            (256, 256)
+            do_preprocess=False
         )
         
         if len(val_ds) == 0:
@@ -246,7 +196,7 @@ class TransferLearningPipeline:
         self.logger.info(f"Building transfer learning model: {self.model_name}...")
         
         try:
-            self.model = get_transfer_model(self.model_name)
+            self.model = get_model(self.model_name)
         except Exception as e:
             self.logger.error(f"Failed to load model {self.model_name}: {e}")
             raise
@@ -322,7 +272,7 @@ class TransferLearningPipeline:
                 imgs = b['image'].to(self.device, non_blocking=True)
                 masks = b['mask'].to(self.device, non_blocking=True)
                 
-                with torch.cuda.amp.autocast(enabled=self.use_amp):
+                with torch.amp.autocast(enabled=True, device_type=self.device.type):
                     preds = self.model(imgs)
                     loss = self.crit(preds, masks)
                 
@@ -335,6 +285,45 @@ class TransferLearningPipeline:
         
         return metrics
     
+    def validate_and_save(self, avg_train_loss: float, ep: int) -> Dict[str, float]:
+        """Validate model and save metrics"""
+        m = self.validate()
+        val_iou = m['iou']
+            
+        # Get current learning rate
+        current_lr = self.opt.param_groups[0]['lr']
+        
+        self.logger.info(
+            f"[{self.model_name}] Epoch {ep:03d} | "
+            f"Train Loss: {avg_train_loss:.4f} | "
+            f"Val IoU: {val_iou:.4f} | "
+            f"Val Dice: {m['dice']:.4f} | "
+            f"LR: {current_lr:.6f}"
+        )
+        
+        # Log metrics to CSV
+        self._log_metrics(ep, avg_train_loss, m, current_lr)
+        
+        # Update learning rate scheduler
+        self.sch.step(val_iou)
+        
+        # Save best model
+        if val_iou > self.best_iou:
+            self.best_iou = val_iou
+            self.logger.info(
+                f"✨ New best IoU: {self.best_iou:.4f}. "
+                f"Saving model to {self.best_ckpt_path}"
+            )
+            
+            save_data = {
+                'model_state_dict': self.model.state_dict(),
+                'optimizer_state_dict': self.opt.state_dict(),
+                'best_val_iou': self.best_iou,
+                'epoch': ep,
+                'model_name': self.model_name,
+            }
+            torch.save(save_data, self.best_ckpt_path)
+    
     def train(self):
         """Main training and validation loop"""
         self.logger.info(f"--- Starting Transfer Learning Training for {self.model_name} ---")
@@ -346,7 +335,6 @@ class TransferLearningPipeline:
         for ep in range(1, self.cfg['epochs'] + 1):
             self.model.train()
             train_loss = 0.0
-            
             pbar = tqdm(
                 self.train_loader,
                 desc=f"[{self.model_name}] Ep {ep}/{self.cfg['epochs']} [Train]"
@@ -359,7 +347,7 @@ class TransferLearningPipeline:
                 self.opt.zero_grad(set_to_none=True)
                 
                 # Mixed precision training
-                with torch.cuda.amp.autocast(enabled=self.use_amp):
+                with torch.amp.autocast(enabled=True, device_type=self.device.type):
                     preds = self.model(imgs)
                     loss = self.crit(preds, masks)
                 
@@ -370,46 +358,13 @@ class TransferLearningPipeline:
                 
                 train_loss += loss.item()
                 pbar.set_postfix(loss=f"{loss.item():.4f}")
+            end_time = datetime.now()
+            
             
             avg_train_loss = train_loss / len(self.train_loader)
             
             # Validation on separate validation set
-            m = self.validate()
-            val_iou = m['iou']
-            
-            # Get current learning rate
-            current_lr = self.opt.param_groups[0]['lr']
-            
-            self.logger.info(
-                f"[{self.model_name}] Epoch {ep:03d} | "
-                f"Train Loss: {avg_train_loss:.4f} | "
-                f"Val IoU: {val_iou:.4f} | "
-                f"Val Dice: {m['dice']:.4f} | "
-                f"LR: {current_lr:.6f}"
-            )
-            
-            # Log metrics to CSV
-            self._log_metrics(ep, avg_train_loss, m, current_lr)
-            
-            # Update learning rate scheduler
-            self.sch.step(val_iou)
-            
-            # Save best model
-            if val_iou > self.best_iou:
-                self.best_iou = val_iou
-                self.logger.info(
-                    f"✨ New best IoU: {self.best_iou:.4f}. "
-                    f"Saving model to {self.best_ckpt_path}"
-                )
-                
-                save_data = {
-                    'model_state_dict': self.model.state_dict(),
-                    'optimizer_state_dict': self.opt.state_dict(),
-                    'best_val_iou': self.best_iou,
-                    'epoch': ep,
-                    'model_name': self.model_name,
-                }
-                torch.save(save_data, self.best_ckpt_path)
+            self.validate_and_save(avg_train_loss, ep)
         
         self.logger.info(
             f"[{self.model_name}] Training completed. "
@@ -421,36 +376,24 @@ class TransferLearningPipeline:
 def main():
     """
     Transfer Learning Segmentation Pipeline CLI
+    Usage : 
     
-    Uses pretrained HuggingFace models for skin lesion segmentation.
-    Supports models: Segformer, MiT-B1, BEiT, MedSAM2, and adaptive variants.
-    
-    Examples:
-        # Train with Segformer (frozen encoder)
-        python seg_transfer_learning_pipeline.py --model segformer
+    Specific model
+        python vanilla_scripts/seg_training_pipeline.py --model segformer_b0
         
-        # Train with BEiT (full fine-tuning)
-        python seg_transfer_learning_pipeline.py --model beit
+    All available models
+        python vanilla_scripts/seg_training_pipeline.py --model all
         
-        # Train all transfer learning models
-        python seg_transfer_learning_pipeline.py --model all
-        
-        # Custom training with metrics tracking
-        python seg_transfer_learning_pipeline.py \\
-            --model adaptive_segformer \\
-            --batch_size 16 \\
-            --num_epochs 50 \\
-            --learning_rate 1e-4 \\
-            --track_metrics \\
-            --use_amp
-        
-        # Train on specific GPU with custom paths
-        python seg_transfer_learning_pipeline.py \\
-            --model mit_b1 \\
-            --image_folder data/images \\
-            --mask_folder data/masks \\
-            --force_device cuda \\
-            --visible_cuda_devices 0
+    For training hair 
+        python vanilla_scripts/seg_training_pipeline.py \
+            --image_folder datasets/hair/image \
+            --mask_folder datasets/hair/mask \
+            --aug_image_folder datasets/aug/hair/image \
+            --aug_mask_folder datasets/aug/hair/mask \
+            --val_image_folder datasets/hair/image \
+            --val_mask_folder datasets/hair/mask \
+            --ckpt ./checkpoints/hair \
+            --model all
     """
     
     p = argparse.ArgumentParser(
@@ -471,12 +414,12 @@ def main():
     )
     p.add_argument(
         '--aug_image_folder', type=str,
-        default="./aug_img",
+        default="datasets/aug/seg/image",
         help='Path to save augmented images (default: %(default)s)'
     )
     p.add_argument(
         '--aug_mask_folder', type=str,
-        default="./aug_mask",
+        default="datasets/aug/seg/mask",
         help='Path to save augmented masks (default: %(default)s)'
     )
     p.add_argument(
@@ -496,7 +439,7 @@ def main():
     )
     
     # Model selection
-    available_models = get_available_transfer_models()
+    available_models = get_available_models()
     p.add_argument(
         '--model', type=str, default='segformer',
         help=f'Transfer learning model. Options: {", ".join(available_models)}, or "all" (default: %(default)s)'
@@ -520,15 +463,6 @@ def main():
         help='Learning rate (default: %(default)s)'
     )
     
-    # Training options
-    p.add_argument(
-        '--use_amp', action='store_true', default=True,
-        help='Use Automatic Mixed Precision for faster training (default: True)'
-    )
-    p.add_argument(
-        '--no_amp', action='store_false', dest='use_amp',
-        help='Disable Automatic Mixed Precision'
-    )
     p.add_argument(
         '--track_metrics', action='store_true',
         help='Track metrics in CSV file'
@@ -556,7 +490,7 @@ def main():
         os.environ["CUDA_VISIBLE_DEVICES"] = args.visible_cuda_devices
     
     # Determine which models to train
-    available_models = get_available_transfer_models()
+    available_models = get_available_models()
     if args.model == 'all':
         models_to_train = available_models
     elif args.model in available_models:
@@ -573,8 +507,8 @@ def main():
     
     # Configuration dictionary
     cfg = {
-        'aug_img': Path(args.aug_image_folder),
-        'aug_mask': Path(args.aug_mask_folder),
+        'aug_image_folder': Path(args.aug_image_folder),
+        'aug_mask_folder': Path(args.aug_mask_folder),
         'image_folder': Path(args.image_folder),
         'mask_folder': Path(args.mask_folder),
         'val_image_folder': Path(args.val_image_folder),
@@ -586,13 +520,12 @@ def main():
         'num_workers': args.num_workers,
         'force_device': args.force_device,
         'track_metrics': args.track_metrics,
-        'use_amp': args.use_amp,
     }
     
     # Create necessary directories
     try:
-        cfg['aug_img'].mkdir(parents=True, exist_ok=True)
-        cfg['aug_mask'].mkdir(parents=True, exist_ok=True)
+        cfg['aug_image_folder'].mkdir(parents=True, exist_ok=True)
+        cfg['aug_mask_folder'].mkdir(parents=True, exist_ok=True)
         cfg['ckpt'].mkdir(parents=True, exist_ok=True)
     except OSError as e:
         print(f"Error creating directories: {e}")
@@ -614,15 +547,18 @@ def main():
         print(f"{'='*60}\n")
         
         try:
-            pipeline = TransferLearningPipeline(
+            pipeline = SegmentationTrainingPipeline(
                 cfg,
                 model_name=model_name,
             )
             
+            do_preprocess = not pipeline.check_augmented_data_exists(
+                Path(cfg['image_folder'])
+            )
+            
             # Preprocess only once for the first model
             if idx == 0:
-                pipeline.preprocess(cfg['image_folder'], cfg['mask_folder'])
-                pipeline.prepare_data()
+                pipeline.prepare_data(do_preprocess=do_preprocess)
             else:
                 # Reuse augmented data for subsequent models
                 pipeline.prepare_data()

@@ -1,6 +1,3 @@
-"""
-MiT (Mix Transformer) based transfer learning model
-"""
 import torch
 import torch.nn as nn
 import torch.nn.functional as F

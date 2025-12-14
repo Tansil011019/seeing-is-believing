@@ -46,7 +46,7 @@ from datetime import datetime
 
 # Project imports
 from preprocessing import process_dataset_parallel, SegmentationDataset
-from models.seg_factory import (
+from models.seg_models import (
     get_transfer_model, 
     get_available_transfer_models
 )

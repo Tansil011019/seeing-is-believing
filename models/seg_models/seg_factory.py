@@ -1,9 +1,9 @@
 """
 Factory functions for creating transfer learning models
 """
-from models.efficient_sam_custom import EfficientSAMCustom
-from models.segformer_b0 import SegformerB0
-from models.segformer_b1 import SegformerB1
+
+from models.seg_models.transfer_models.segformer_b0 import SegformerB0
+from models.seg_models.transfer_models.segformer_b1 import SegformerB1
 
 def get_transfer_model(model_name, freeze_encoder=False, **kwargs):
     """
@@ -20,7 +20,6 @@ def get_transfer_model(model_name, freeze_encoder=False, **kwargs):
     models = {
         'segformer_b0': lambda: SegformerB0(),
         'segformer_b1': lambda: SegformerB1(),
-        'efficient_sam_custom': lambda: EfficientSAMCustom(),
 
     }
     

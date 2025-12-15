@@ -5,6 +5,7 @@ torchvision>=0.10.0
 opencv-python>=4.5.0
 transformers
 timm
+scikit-image
 
 # Transfer learning with HuggingFace models
 transformers>=4.30.0
@@ -29,6 +30,9 @@ color-log
 
 # XAI
 grad-cam
+
+# env
+python-dotenv>=0.21.0
 
 # Optional but recommended
 # jupyterlab>=3.0.0  # For interactive development

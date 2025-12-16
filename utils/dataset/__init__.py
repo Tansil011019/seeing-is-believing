@@ -1,4 +1,3 @@
-from .image_dataset import ImageDataset
-from .segmentation_dataset import SegmentationDataset
+from .image_dataset import ImageDataset, ParquetImageDataset
 
-__all__ = [ImageDataset, SegmentationDataset]
+__all__ = [ImageDataset, ParquetImageDataset]

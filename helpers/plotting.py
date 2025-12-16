@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
 import os
+from matplotlib.ticker import MaxNLocator
 
 def plot_metrics(history, model_name, save_path):
     all_records = []
@@ -28,6 +29,12 @@ def plot_metrics(history, model_name, save_path):
     fig, ax = plt.subplots(2, 2, figsize=(15, 12), sharex=True)
     fig.suptitle(f"Training and Validation Metrics of {model_name} over {len(history)} folds", fontsize=16)
 
+    def format_ax(axes, title, y_label):
+        axes.set_title(title, fontsize=14)
+        axes.set_ylabel(y_label)
+        axes.set_xlabel('Epoch')
+        axes.xaxis.set_major_locator(MaxNLocator(integer=True, nbins=10))
+
     sns.lineplot(
         data = df,
         x = 'epoch',
@@ -36,10 +43,7 @@ def plot_metrics(history, model_name, save_path):
         ax = ax[0, 0],
         color = 'blue'
     )
-    ax[0, 0].set_title('Training Loss', fontsize=14)
-    ax[0, 0].set_ylabel('Loss')
-    ax[0, 0].set_xlabel('Epoch')
-    ax[0, 0].set_xticks(epochs)
+    format_ax(ax[0, 0], 'Training Loss', 'Loss')
 
     sns.lineplot(
         data = df,
@@ -49,10 +53,7 @@ def plot_metrics(history, model_name, save_path):
         ax = ax[0, 1],
         color = 'orange'
     )
-    ax[0, 1].set_title('Validation Loss', fontsize=14)
-    ax[0, 1].set_ylabel('Loss')
-    ax[0, 1].set_xlabel('Epoch')
-    ax[0, 1].set_xticks(epochs)
+    format_ax(ax[0, 1], 'Validation Loss', 'Loss')
 
     sns.lineplot(
         data = df,
@@ -62,10 +63,7 @@ def plot_metrics(history, model_name, save_path):
         ax = ax[1, 0],
         color = 'green'
     )
-    ax[1, 0].set_title('Training Accuracy', fontsize=14)
-    ax[1, 0].set_ylabel('Accuracy (%)')
-    ax[1, 0].set_xlabel('Epoch')
-    ax[1, 0].set_xticks(epochs)
+    format_ax(ax[1, 0], 'Training Accuracy', 'Accuracy (%)')
 
     sns.lineplot(
         data = df,
@@ -75,15 +73,10 @@ def plot_metrics(history, model_name, save_path):
         ax = ax[1, 1],
         color = 'red'
     )
-    ax[1, 1].set_title('Validation Accuracy', fontsize=14)
-    ax[1, 1].set_ylabel('Accuracy (%)')
-    ax[1, 1].set_xlabel('Epoch')
-    ax[1, 1].set_xticks(epochs)
+    format_ax(ax[1, 1], 'Validation Accuracy', 'Accuracy (%)')
 
     plt.tight_layout(rect=[0, 0.03, 1, 0.95])
     if (save_path):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
         plt.savefig(save_path)
     plt.show()
-
-    __all__ = ['plot_metrics']

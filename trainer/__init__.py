@@ -1,6 +1,6 @@
 from .timm_trainer import TimmTrainer
 from .transformer_trainer import TransformerTrainer
-from .segmentation_trainer import SegmentationTrainer
-from .attribute_trainer import AttributeTrainer
+from .rgan_trainer import RGANTrainer
+from .fit_trainer import FitTrainer
 
-__all__ = ['TimmTrainer', 'TransformerTrainer', 'SegmentationTrainer', 'AttributeTrainer']
+__all__ = ['TimmTrainer', 'TransformerTrainer', 'RGANTrainer', 'FitTrainer']

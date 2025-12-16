@@ -25,7 +25,8 @@ class Trainer:
         min_delta = 0,
         save_path = None,
         fold_index = None,
-        scheduler_step_at_epoch_end = True
+        scheduler_step_at_epoch_end = True,
+        **kwargs
     ):
         self.model = model
         self.model_name = model_name
@@ -47,6 +48,12 @@ class Trainer:
             self._patience_counter = 0
             self._best_val_loss = float('inf')
             self._best_model_state = None
+        
+        if kwargs:
+            logger.warning(f"Unused Trainer parameters: {kwargs.keys()}")
+            
+    def _get_logits_from_outputs(self, outputs):
+        raise NotImplementedError("This method should be implemented in subclasses.")
 
     def _get_logits_from_outputs(self, outputs):
         raise NotImplementedError("This method should be implemented in subclasses.")
@@ -57,7 +64,7 @@ class Trainer:
         correct = 0
         total = 0
 
-        for images, labels in tqdm(self.train_loader, desc="Training"):
+        for images, labels, _ in tqdm(self.train_loader, desc="Training"):
             images = images.to(self.device)
             labels = labels.to(self.device)
 
@@ -89,7 +96,7 @@ class Trainer:
         total = 0
 
         with torch.no_grad():
-            for images, labels in tqdm(self.val_loader, desc="Validation"):
+            for images, labels, _ in tqdm(self.val_loader, desc="Validation"):
                 images = images.to(self.device)
                 labels = labels.to(self.device)
 
@@ -156,7 +163,7 @@ class Trainer:
             "training_loss": train_losses,
             "training_accuracy": train_accs,
             "val_loss": val_losses,
-            "val_accuracy": val_accs
+            "val_accuracy": val_accs,
         }
 
         if self.save_path:

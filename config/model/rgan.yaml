@@ -1,0 +1,27 @@
+name: r-gan
+
+generator:
+  _target_: base.RGANGenerator
+  z_dim: 100
+  img_channels: 3
+  img_size: 224
+
+discriminator:
+  _target_: base.RGANDiscriminator
+  img_channels: 3
+  img_size: 224
+
+training: 
+  epochs: 10000
+  beta: 0.5
+  device: cuda:7
+  checkpoint_interval: 1000
+  resume_path: null 
+  checkpoints_dir: "outputs/rgan/checkpoints/"
+  z_dim: 100
+  lambda_gp: 10.0
+  lambda_sim: 0.1
+  generator_lr: 0.0001
+  discriminator_lr: 0.0001
+  generator_training_times: 3
+  discriminator_training_times: 4

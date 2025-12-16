@@ -3,13 +3,16 @@ name: resnet-34
 params:
   _target_: transformers.ResNetForImageClassification.from_pretrained
   pretrained_model_name_or_path: microsoft/resnet-34
-  num_labels: 10
+  num_labels: 7
   ignore_mismatched_sizes: true
+  token: ${oc.env:HF_TOKEN}
 
 training:
-  epochs: 1
+  epochs: 100
   early_stopping: true
   save_path: "resnet34_best_model.pt"
-  device: cuda:1
+  device: cuda:6
   patience: 10
   min_delta: 0.0
+  freeze_ratio: 0.0
+  class_count: false

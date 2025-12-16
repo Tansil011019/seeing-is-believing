@@ -7,14 +7,20 @@ from torch.utils.data import Subset
 import torch
 import os
 from datetime import datetime
+from dotenv import load_dotenv
 
-os.environ["CUDA_VISIBLE_DEVICES"] = "1, 2, 3"
+load_dotenv()
+from datetime import datetime
+
+# os.environ["CUDA_VISIBLE_DEVICES"] = "5, 6, 7"
+logging.getLogger("PIL").setLevel(logging.WARNING)
 logger = logging.getLogger(__name__)
 
 batch_scheduler = ["OneCycleLR"]
 
 @hydra.main(version_base=None, config_path="config", config_name="config")
 def train(cfg: DictConfig) -> None:
+    logger.info(f"Token loaded: {'HF_TOKEN' in os.environ}")
     logger.info("Configuration: ")
     logger.info(f"\t{OmegaConf.to_yaml(cfg)}") 
 
@@ -61,8 +67,7 @@ def train(cfg: DictConfig) -> None:
             else:
                 scheduler = instantiate(cfg.scheduler, optimizer=optimizer)
 
-        trainer = instantiate(
-            cfg.training,
+        trainer = Trainer(
             model=model,
             model_name=cfg.model.name,
             optimizer=optimizer,
@@ -72,6 +77,8 @@ def train(cfg: DictConfig) -> None:
             device=device,
             epoch=cfg.model.training.epochs,
             scheduler=scheduler,
+            freeze_ratio=freeze_ratio,
+            class_count=class_counts if class_counts else None,
             early_stopping=cfg.model.training.early_stopping,
             patience=cfg.model.training.patience,
             min_delta=cfg.model.training.min_delta,

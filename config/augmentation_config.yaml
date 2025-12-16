@@ -1,0 +1,25 @@
+defaults:
+  - model: rgan
+  - training: rgan_trainer
+  - dataset: parquet_augmentation_data
+  - dataloader: class_data
+  - _self_
+  - override hydra/job_logging: custom
+
+# ["MEL", "BCC", "AKIEC", "BKL", "DF", "VASC"]
+target_labels: ["MEL"]
+
+label_map:
+  MEL: 0
+  NV: 1
+  BCC: 2
+  AKIEC: 3
+  BKL: 4
+  DF: 5
+  VASC: 6
+
+seed: 42
+paths: 
+  data_dir: /raid/home/llmsosmed/my_folder/images.parquet
+  results_dir: results/
+  csv_file: notebooks/ISIC2018_Task3_Training_Input/cleaned_data.csv

@@ -1,0 +1,19 @@
+name: xgboost
+
+params: 
+  _target_: xgboost.XGBClassifier
+  n_estimators: 1000
+  max_depth: 6
+  learning_rate: 0.05
+  subsample: 0.8
+  colsample_bytree: 0.8
+  objective: multi:softprob
+  num_class: 7
+  tree_method: hist
+  random_state: ${seed}
+  device: cuda:7
+  early_stopping_rounds: 50
+  
+training:
+  verbose: true
+  use_eval_set: true

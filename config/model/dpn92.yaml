@@ -4,12 +4,14 @@ params:
   _target_: timm.create_model
   pretrained: true
   model_name: dpn92.mx_in1k
-  num_classes: 10
+  num_classes: 7
 
 training:
-  epochs: 1
+  epochs: 100
   early_stopping: true
-  save_path: "resnet50_best_model.pt"
-  device: cuda:1
+  save_path: "dpn92_best_model.pt"
+  device: cuda:5
   patience: 10
   min_delta: 0.0
+  freeze_ratio: 0.0
+  class_count: false

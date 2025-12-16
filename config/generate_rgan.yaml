@@ -1,0 +1,31 @@
+defaults:
+  - model: rgan
+  - _self_
+  - override hydra/job_logging: custom
+
+device: cuda:6
+batch_size: 64
+
+target_labels: ["MEL"]
+
+save_path: /raid/home/llmsosmed/my_folder/data
+
+tasks:
+  DF: 
+    target_counts: 6590
+    path: "results/r-gan/DF/20251201-175603/rgan_final_model_20251202-031825.pth"
+  BKL:
+    target_counts: 5606
+    path: "results/r-gan/BKL/20251202-062949/rgan_final_model_20251204-083455.pth"
+  AKIEC:
+    target_counts: 6378
+    path: "results/r-gan/AKIEC/20251202-063412/rgan_final_model_20251202-232216.pth"
+  VASC:
+    target_counts: 6563
+    path: "results/r-gan/VASC/20251201-151511/rgan_final_model_20251202-010558.pth"
+  BCC:
+    target_counts: 6191
+    path: "results/r-gan/BCC/20251202-063146/rgan_final_model_20251203-012136.pth"
+  MEL:
+    target_counts: 5592
+    path: "results/r-gan/MEL/20251202-063543/rgan_final_model_20251204-134215.pth"

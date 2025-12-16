@@ -9,6 +9,8 @@ scikit-image
 
 # Transfer learning with HuggingFace models
 transformers>=4.30.0
+timm
+xgboost
 
 numpy>=1.21.0
 Pillow>=8.3.0
@@ -33,6 +35,15 @@ grad-cam
 
 # env
 python-dotenv>=0.21.0
+
+# XAI
+grad-cam
+
+# Parquet
+pyarrow
+
+huggingface_hub
+python-dotenv
 
 # Optional but recommended
 # jupyterlab>=3.0.0  # For interactive development

@@ -4,12 +4,14 @@ params:
   _target_: timm.create_model
   pretrained: true
   model_name: densenet161.tv_in1k
-  num_classes: 10
+  num_classes: 7
 
 training:
-  epochs: 1
+  epochs: 100
   early_stopping: true
   save_path: "densenet161_best_model.pt"
-  device: cuda:1
+  device: cuda:6
   patience: 10
   min_delta: 0.0
+  freeze_ratio: 0.0
+  class_count: false

@@ -30,7 +30,7 @@ usage() {
 }
 
 SHORT_OPTS="h"
-LONG_OPTS="train,help"
+LONG_OPTS="train,help,train-rgan,generate-rgan,generate-oof,train-dual-phase,generate-meta-dataset,train-meta,ensemble"
 
 PARSED_OPTS=$(getopt --options $SHORT_OPTS --longoptions $LONG_OPTS --name "$0" -- "$@")
 
@@ -44,6 +44,34 @@ while [[ -n "$1" ]]; do
     case "$1" in
         --train)
             ENTRYPOINT="train"
+            shift
+            ;;
+        --train-rgan)
+            ENTRYPOINT="train_rgan"
+            shift
+            ;;
+        --generate-rgan)
+            ENTRYPOINT="generate_rgan"
+            shift
+            ;;
+        --generate-oof)
+            ENTRYPOINT="generate_oof"
+            shift
+            ;;
+        --train-dual-phase)
+            ENTRYPOINT="train_dual_phase"
+            shift
+            ;;
+        --generate-meta-dataset)
+            ENTRYPOINT="generate_meta_dataset"
+            shift
+            ;;
+        --train-meta)
+            ENTRYPOINT="train_meta"
+            shift
+            ;;
+        --ensemble)
+            ENTRYPOINT="ensemble"
             shift
             ;;
         -h|--help)
@@ -67,3 +95,30 @@ echo "Start Experiment"
 eval $CMD
 echo "Experiment Complete"
 echo "-----------------------------------"
+
+
+# --- 🚀 EMAIL NOTIFICATION ---
+# This path should point to your email python script
+PYTHON_EMAIL_SCRIPT="/data/marthen/send_email.py"
+PYTHON_EXE=$(which python3)
+
+# Check if the notification script exists
+if [ ! -f "$PYTHON_EMAIL_SCRIPT" ]; then
+    echo "Notification script $PYTHON_EMAIL_SCRIPT not found. Skipping email."
+    exit 0 # Exit script normally
+fi
+
+echo "Attempting to send email notification..."
+
+# Prepare the email content
+SUBJECT="✅ Wilson's Training Completed"
+BODY="Start the training for the next model ASAP!"
+
+# Call the python script. It will use the hardcoded credentials.
+"$PYTHON_EXE" "$PYTHON_EMAIL_SCRIPT" "$SUBJECT" "$BODY"
+
+if [ $? -eq 0 ]; then
+    echo "Email notification sent."
+else
+    echo "ERROR: Email notification failed to send. Check logs above."
+fi

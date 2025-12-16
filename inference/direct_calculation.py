@@ -188,16 +188,13 @@ class DirectCalculation:
             lbp = local_binary_pattern(masked_gray, n_points, radius, method='uniform')
             
             # Calculate LBP variance (indicates roughness/pattern complexity)
-            if mask is not None:
-                lbp_values = lbp[mask > 0]
-            else:
-                lbp_values = lbp.flatten()
+            lbp_values = lbp.flatten()
             
             if len(lbp_values) > 0:
                 lbp_variance = float(np.var(lbp_values))
             else:
                 lbp_variance = 0.0
-                
+            
         except Exception as e:
             lbp_variance = 0.0
         

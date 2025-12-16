@@ -141,5 +141,6 @@ Format the report in a structured manner with clear sections for clinical use.""
         
         # Extract generated text from pipeline output
         generated_text = outputs[0]['generated_text'][-1]['content']
+        print("DEBUG Generated Text:", generated_text[:500])  # Print first 500 chars for debugging
         
         return generated_text.strip()

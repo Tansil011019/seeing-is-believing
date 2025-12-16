@@ -32,6 +32,7 @@ def main():
         seg_checkpoint_path=SEG_CHECKPOINT_PATH,
         cls_model_name=CLS_MODEL_NAME,
         cls_checkpoint_path=CLS_CHECKPOINT_PATH,
+        text_model_name="google/medgemma-27b-it",
         device=DEVICE,
         input_size=(224, 224)
     )

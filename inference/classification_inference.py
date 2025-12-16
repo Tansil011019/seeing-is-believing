@@ -5,7 +5,7 @@ from typing import Dict, Tuple
 from PIL import Image
 import cv2
 import pandas as pd
-
+from utils.hydra_factory.ensemble_xai import get_xai
 
 class ClassificationInference:
     """
@@ -40,7 +40,8 @@ class ClassificationInference:
         self.device = torch.device(device if torch.cuda.is_available() else 'cpu')
         self.num_classes = num_classes
         
-        # TODO : Load classification model based on model_name
+        # Load integrated xai ensemble wrapper
+        self.xai = get_xai()
         
     def infer(self, 
               image: torch.Tensor, 

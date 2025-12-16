@@ -27,7 +27,7 @@ class SegmentationTester :
         # Load model and checkpoint
         self.model = get_model(model_name)
         checkpoint = torch.load(checkpoint_path, map_location="cpu")
-        self.model.load_state_dict(checkpoint["model_state_dict"])
+        self.model.load_state_dict(checkpoint)
         self.model = self.model.to(device)
         self.model.eval()
         
@@ -157,7 +157,8 @@ class SegmentationTester :
         """Save prediction mask as image"""
         pred_mask = (pred_mask * 255).astype(np.uint8)
         cv2.imwrite(output_path, pred_mask)
-
+        
+        
 if __name__ == "__main__":
     tester = SegmentationTester(
         model_name='segformer_b0',
@@ -170,3 +171,4 @@ if __name__ == "__main__":
         num_workers=4
     )
     tester.test()
+        

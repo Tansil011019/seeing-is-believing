@@ -17,6 +17,12 @@ class InferenceSystem:
     Comprehensive inference system that orchestrates all inference pipelines
     Generates complete medical reports with visualizations
     """
+    ABLATION_TYPES = [
+        "image_only",
+        "image_heatmap",
+        "image_class",
+        "image_heatmap_class"
+    ]
     
     def __init__(
         self,
@@ -86,7 +92,9 @@ class InferenceSystem:
         
         print("Inference system initialized successfully!")
     
-    def infer(self, image_path: str) -> Dict:
+    def infer(self, 
+              image_path: str,
+              ablation_type: str = None) -> Dict:
         """
         Complete inference pipeline: from image to medical report
         
@@ -105,39 +113,39 @@ class InferenceSystem:
         original_image, processed_image_pil, processed_image_tensor = self._load_and_preprocess_image(image_path)
         
         # Step 1: Classification Inference
-        print("\n[1/5] Running classification inference...")
-        cls_results = self.classification_inference.infer(processed_image_pil, image_path=image_path)
+        cls_results = self.classification_inference.infer(image=processed_image_pil, image_path=image_path)
         
         
         # Step 2: Segmentation Inference
-        print("\n[2/5] Running segmentation inference...")
         seg_results = self.segmentation_inference.infer(processed_image_tensor)
         
         
         # Step 3: Direct Calculation on Original Image
-        print("\n[3/5] Computing color and texture features...")
         
         color_results = self.direct_calculation.calculate_color_variegation(np.array(original_image))
         differential_results = self.direct_calculation.calculate_differential_structures(np.array(original_image))
         # Step 4: Create Visualization (Heatmap + Original Image)
-        print("\n[4/5] Creating visualization...")
         visualization = self._create_visualization(
             original_image, 
             cls_results['gradient_heatmap']
         )
         
         # Step 5: Generate Text Report
-        print("\n[5/5] Generating medical report...")
         description_text = self._create_description_text(
-            cls_results, seg_results, color_results, differential_results
+            cls_results, seg_results, color_results, differential_results,
+            skip_abcd = ablation_type is not None,
+            skip_class = (ablation_type == "image_only" or ablation_type == "image_heatmap")
         )
         
         # Convert visualization to PIL Image for text generation
-        viz_image = Image.fromarray(visualization)
+        if ablation_type == "image_only" or ablation_type == "image_class" :
+            viz_image = processed_image_pil
+        else : 
+            viz_image = Image.fromarray(visualization)
         
         report = self.text_generation_inference.infer(
             input_prompt=description_text,
-            input_image=viz_image
+            input_image=viz_image,
         )
         
         
@@ -240,7 +248,7 @@ class InferenceSystem:
         return visualization
     
     def _create_description_text(self, cls_results: Dict, seg_results: Dict, 
-                                color_results: Dict, texture_results: Dict) -> str:
+                                color_results: Dict, texture_results: Dict, skip_abcd: bool, skip_class : bool) -> str:
         """
         Create structured description text from all inference results
         
@@ -262,13 +270,15 @@ class InferenceSystem:
         
         
         
-        description = f"""
+        description_class = f"""
 LESION ANALYSIS SUMMARY
 =======================
 
 DEEP LEARNING CLASSIFICATION:
 {cls_results['prediction_text']}
+"""
 
+        description_abcd = f"""\n\n
 ABCD RULE ANALYSIS:
 
 A - ASYMMETRY:
@@ -291,6 +301,11 @@ D - DIFFERENTIAL STRUCTURES (TEXTURE):
   Correlation: {texture_results['correlation']:.3f}
   (Low homogeneity + High contrast = disorganized growth pattern)
 """
+        description = ""
+        if not skip_class :
+            description += description_class
+        if not skip_abcd :
+            description += description_abcd
         return description.strip()
     
     # def _assess_asymmetry(self, asymmetry_index: float) -> str:

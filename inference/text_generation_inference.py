@@ -61,7 +61,7 @@ Format the report in a structured manner with clear sections for clinical use.""
                 "image-text-to-text",
                 model=self.model_name,
                 torch_dtype=torch.bfloat16,
-                device=self.device,
+                model_kwargs={"load_in_8bit": True},
             )
             
             self.model = self.pipe.model
@@ -70,7 +70,6 @@ Format the report in a structured manner with clear sections for clinical use.""
             self.processor = getattr(self.pipe, 'image_processor', 
                               getattr(self.pipe, 'feature_extractor',
                               getattr(self.pipe, 'processor', self.pipe.tokenizer)))
-            self.model.to(self.device)
             self.model_type = 'medgemma'
 
         except Exception as e:
@@ -118,10 +117,10 @@ Format the report in a structured manner with clear sections for clinical use.""
         if image is not None:
             messages = [
                 {"role": "system", "content": 
-                    [{"type": "text", "text" : self.system_prompt}]},
+                    [{"type": "text", "text" : ""}]}, # REINSERT THE SYSTEM PROMPT
                 {"role": "user", 
                  "content": 
-                    [{"type": "text", "text" : f"<image>\n\nAnalysis Data:\n{prompt}\n\nGenerate a diagnostic report:"},
+                    [{"type": "text", "text" : f"<image>\n\n\n{prompt}\n\nGenerate a diagnostic report:"},
                      {"type": "image", "image": image}]}
            ]
         else:
@@ -141,6 +140,5 @@ Format the report in a structured manner with clear sections for clinical use.""
         
         # Extract generated text from pipeline output
         generated_text = outputs[0]['generated_text'][-1]['content']
-        print("DEBUG Generated Text:", generated_text[:500])  # Print first 500 chars for debugging
         
         return generated_text.strip()

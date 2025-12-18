@@ -44,7 +44,7 @@ class ClassificationInference:
         self.xai = get_xai()
         
     def infer(self, 
-              image: torch.Tensor, 
+              image: torch.Tensor = None, 
               image_path: str = None) -> Dict[str, any]:
         """
         Run classification inference and compute gradient visualization
@@ -59,6 +59,15 @@ class ClassificationInference:
                 - gradient_heatmap: Gradient-based heatmap (H, W)
                 - gradient_heatmap_raw: Raw gradient values
         """
+        heatmap, pred_label = self.xai.explain_image(image_path)
+        
+        return {
+            'prediction_text': pred_label,
+            'gradient_heatmap': heatmap,
+        }
+        
+        
+        
         # TODO : CHANGE LATER : PLACEHOLDER FOR CLASSIFICATION INFERENCE
         df_pred = pd.read_csv('outputs/ensemble_predictions_old.csv')
         

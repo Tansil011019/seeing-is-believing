@@ -6,6 +6,7 @@ opencv-python>=4.5.0
 transformers
 timm
 scikit-image
+jinja2>=3.1.0 
 
 # Transfer learning with HuggingFace models
 transformers>=4.30.0

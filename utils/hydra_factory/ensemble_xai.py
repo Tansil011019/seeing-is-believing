@@ -1,6 +1,6 @@
 from omegaconf import DictConfig
 from hydra.utils import instantiate
-from fusion_xai import EnsembleXAI
+from utils.fusion_xai import EnsembleXAI
 from hydra import initialize, compose
 
 def build_ensemble_xai(cfg: DictConfig) -> EnsembleXAI:
@@ -19,7 +19,7 @@ def build_ensemble_xai(cfg: DictConfig) -> EnsembleXAI:
 
 
 def get_xai():
-    with initialize(config_path="config", version_base=None):
+    with initialize(config_path="../../config", version_base=None):
         cfg = compose(config_name="ensemble_config")
 
     return build_ensemble_xai(cfg)
